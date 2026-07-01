@@ -14,27 +14,24 @@ services:
       context: ..
       dockerfile: project/backend/Dockerfile
     environment:
-      # BGaming's own documented convention for dev/stage backend containers (Technical
-      # Documentation PDF, "GodMode" section) - not just a local-only convenience.
       ENABLE_GOD_MODE: "1"
-      # ASSUMPTION, unverified: runner_cli bundles an RNG microservice reachable on this
-      # port (confirmed as the *localhost* default in BGaming's docs - "for dev_runner by
-      # default it's http://localhost:4002/api" - but not yet confirmed reachable via the
-      # compose service name "runner" inside this multi-container network). Check
-      # `docker compose logs runner` for the port it actually binds, and adjust here if
-      # different.
-      RNG_URL: "http://runner:4002/api"
+      # Runner uses host networking (see below), so its RNG service is reachable on the
+      # host at 127.0.0.1:4002. host.docker.internal resolves to the host gateway from
+      # inside a bridge-networked container.
+      RNG_URL: "http://host.docker.internal:4002/api"
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # makes host.docker.internal resolve on Linux
+    ports:
+      - "127.0.0.1:4051:80" # localhost-only - runner reaches backend here, never public
     restart: unless-stopped
-    # Deliberately no `ports:` - only the `runner` service should ever reach the backend
-    # directly, never the public internet.
 
   runner:
     build:
       context: ..
       dockerfile: deploy/runner.Dockerfile
-    ports:
-      - "4000:4000" # admin UI (sessions, god mode, freebets) - keep internal or SSH-tunnel
-      - "4001:4001" # game-facing JSON-RPC API - nginx reverse-proxies this to the public
+    network_mode: host # bypasses Docker DNS entirely - runner uses host network stack,
+                       # reaching backend at 127.0.0.1:4051 and binding 4000/4001/4002
+                       # directly on the host (nginx already proxies host:4001 to public)
     depends_on:
       - backend
     restart: unless-stopped

@@ -7,9 +7,10 @@ game:
   code: WildlyMonsters
 
 backend:
-  # "backend" is this compose network's service name (see deploy/docker-compose.yml),
-  # reachable on port 80 per project/backend/Dockerfile's BACKEND_PORT=80.
-  url: "http://backend:80/api"
+  # Runner uses host networking so it reaches the backend container via the host-mapped
+  # localhost port (127.0.0.1:4051 → backend container's port 80). Avoids Erlang/OTP's
+  # DNS resolver which doesn't reliably resolve Docker compose service names.
+  url: "http://127.0.0.1:4051/api"
 
 sessions:
   # Placeholder dev session/token - swap the key below for your own random hex string
