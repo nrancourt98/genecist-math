@@ -4,7 +4,7 @@
 # reference. Tune freely; nothing here affects engine math, only session/bet presentation.
 
 game:
-  code: WildlyMonsters
+  code: Genecist
 
 backend:
   # Runner uses host networking so it reaches the backend container via the host-mapped
