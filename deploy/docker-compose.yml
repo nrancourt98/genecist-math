@@ -33,7 +33,8 @@ services:
       context: ..
       dockerfile: deploy/runner.Dockerfile
     ports:
-      - "4000:4000" # nginx on the host reverse-proxies here - see nginx-runner.conf.example
+      - "4000:4000" # admin UI (sessions, god mode, freebets) - keep internal or SSH-tunnel
+      - "4001:4001" # game-facing JSON-RPC API - nginx reverse-proxies this to the public
     depends_on:
       - backend
     restart: unless-stopped

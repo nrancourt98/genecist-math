@@ -70,10 +70,15 @@ run Linux binaries, which this one can't. Budget some iteration time on the serv
    ```
 5. Smoke-test locally on the server before wiring up nginx:
    ```sh
-   curl -X POST http://127.0.0.1:4000/api -H 'content-type: application/json' \
-     -d '{"jsonrpc":"2.0","id":1,"method":"init","params":{"token":"dev0000000000000000000000000001"}}'
+   curl -X POST http://127.0.0.1:4001/api -H 'content-type: application/json' \
+     -d '{"jsonrpc":"2.0","id":1,"method":"init","params":{"token":"<your token from step 2>"}}'
    ```
    Expect a JSON result with `balance`/`config`/etc. - not a connection error.
+
+   Confirmed port map (discovered by running the binary - two separate ports, not one):
+   - **4001** — game-facing JSON-RPC API (`init`/`info`/`play`/`replay`) — proxied by nginx
+   - **4000** — runner admin UI (sessions, god mode, freebets) — keep internal/SSH-tunnel
+   - **4002** — RNG microservice (internal only, called by the backend container)
 6. Copy `deploy/nginx-runner.conf.example` into your nginx sites, replace
    `api-dev.your-domain.example` and the `ssl_certificate` paths with your real values,
    enable the site, `nginx -t && systemctl reload nginx`.

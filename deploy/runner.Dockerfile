@@ -26,13 +26,11 @@ RUN chmod +x /usr/local/bin/runner_cli
 WORKDIR /runner
 COPY deploy/runner-config.yml ./config.yml
 
-EXPOSE 4000
+EXPOSE 4000 4001
 
 ENTRYPOINT ["runner_cli"]
-# -p/-c/-b flags per the BGaming Technical Documentation PDF's "Local runner" example
-# (`runner -p 4000 -c ./myGame/config.yml -b http://localhost:3050/myGame/backend`) -
-# "backend" below is this compose network's service name for project/backend's container,
-# reachable on port 80 per that Dockerfile's BACKEND_PORT=80. Flag names/defaults are
-# unverified against this specific binary - run `runner_cli --help` on the server if this
-# doesn't start cleanly.
-CMD ["-p", "4000", "-c", "/runner/config.yml"]
+# Only -c is passed; -p and -b are NOT valid flags for this binary (confirmed by running
+# it - "-b : Unknown option", and passing -p alongside config.yml caused a double-bind on
+# port 4000 since the config already sets the port internally). The runner defaults to
+# port 4000, which Docker's compose port mapping ("4000:4000") forwards independently.
+CMD ["-c", "/runner/config.yml"]
