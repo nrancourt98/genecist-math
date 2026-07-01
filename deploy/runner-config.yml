@@ -1,0 +1,36 @@
+---
+# runner_cli's config - see deploy/README.md for what each section means and BGaming's
+# Technical Documentation PDF ("Local runner" / "Example config") for the canonical field
+# reference. Tune freely; nothing here affects engine math, only session/bet presentation.
+
+game:
+  code: WildlyMonsters
+
+backend:
+  # "backend" is this compose network's service name (see deploy/docker-compose.yml),
+  # reachable on port 80 per project/backend/Dockerfile's BACKEND_PORT=80.
+  url: "http://backend:80/api"
+
+sessions:
+  # Placeholder dev session/token - swap the key below for your own random hex string
+  # (it doubles as the session token) and hand your frontend dev a URL like
+  # https://your-domain.example/?token=<that value>. Add more entries here for additional
+  # testers/currencies/locales as needed - see BGaming's config.yml reference for the full
+  # per-session field set (state/currency/locale/bet_limits/etc.).
+  dev0000000000000000000000000001:
+    state: active
+    currency: usd
+    locale: en
+    bet_limits: [50, 100, 200, 500, 1000, 2000]
+    freebets_limits: [50, 100, 200, 500, 1000, 2000]
+    default_bet: 100
+    # Matches playHandler.js's PURCHASED_FEATURE_TO_BET_MODE exactly (engine/backend/src/
+    # playHandler.js) - BGaming's generic example values (buy_chance/buy_bonus_and_chance)
+    # don't apply to this game, only these two do.
+    purchased_features: ["buy_bonus", "buy_super"]
+    balance: 1000000
+    rtp: "96"
+
+urls:
+  return_url: https://your-domain.example
+  deposit_url: https://your-domain.example

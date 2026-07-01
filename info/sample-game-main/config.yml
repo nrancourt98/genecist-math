@@ -1,0 +1,27 @@
+---
+game:
+  code: DiceGame
+
+backend:
+  url: "http://localhost:4051/api"
+
+sessions:
+  fda1091b1c7349e8dbcc4c2d6fd89926:
+    state: active
+    currency: usd
+    locale: en
+    bet_limits: [100, 200, 300, 400, 500]
+    freebets_limits: [100, 200, 300, 400, 500]
+    default_bet: 300
+    purchased_features: ["buy_bonus", "buy_chance", "buy_bonus_and_chance"]
+    balance: 100000
+    rtp: "95.5"
+
+urls:
+  return_url: https://google.com
+  deposit_url: https://binance.com
+
+currencies:
+  gbr:
+    symbol: "£"
+    exponent: 2

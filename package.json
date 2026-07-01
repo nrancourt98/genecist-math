@@ -1,0 +1,14 @@
+{
+  "name": "wildly-monsters-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wildly Monsters slot game engine, offline RTP simulation CLI, and dev tools",
+  "scripts": {
+    "test": "node --test tests/**/*.test.js",
+    "convert-reels": "node project/engine/data/convertReels.js",
+    "gen-reels": "node project/engine/data/generateReels.js",
+    "sim": "node sim/simulate.js",
+    "mock-runner": "node devtools/mockRunner.js"
+  },
+  "license": "UNLICENSED"
+}

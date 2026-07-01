@@ -1,0 +1,92 @@
+{
+    "bonus": {
+        "gametype": [
+            "freegame",
+            "basegame"
+        ],
+        "kind": [
+            "6",
+            "4",
+            "3",
+            "5"
+        ],
+        "mult": [
+            "1"
+        ],
+        "symbol": [
+            "H4",
+            "L3",
+            "L4",
+            "H3",
+            "scatter",
+            "L2",
+            "H5",
+            "W",
+            "H1",
+            "L1",
+            "H2",
+            "L5"
+        ]
+    },
+    "base": {
+        "gametype": [
+            "basegame",
+            "freegame"
+        ],
+        "kind": [
+            "5",
+            "4",
+            "2",
+            "1",
+            "0",
+            "3",
+            "6"
+        ],
+        "symbol": [
+            "H2",
+            "L2",
+            "L3",
+            "L5",
+            "H1",
+            "L4",
+            "W",
+            "H5",
+            "H3",
+            "L1",
+            "scatter",
+            "H4"
+        ],
+        "mult": [
+            "1"
+        ]
+    },
+    "super": {
+        "gametype": [
+            "basegame",
+            "freegame"
+        ],
+        "kind": [
+            "3",
+            "4",
+            "6",
+            "0",
+            "5"
+        ],
+        "symbol": [
+            "L5",
+            "L2",
+            "scatter",
+            "L3",
+            "L1",
+            "W",
+            "H2",
+            "L4",
+            "H3",
+            "H1",
+            "H4"
+        ],
+        "mult": [
+            "1"
+        ]
+    }
+}

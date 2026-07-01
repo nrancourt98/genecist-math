@@ -1,0 +1,19 @@
+# Applies to every Docker build in this repo - both project/backend/Dockerfile and
+# deploy/runner.Dockerfile use the repo root as their build context (see each file's own
+# header comment), and Docker resolves .dockerignore from the context root, not from
+# wherever -f points. A .dockerignore previously lived at project/backend/.dockerignore,
+# which was silently never read for that reason - moved here instead.
+
+.git/
+node_modules/
+**/node_modules/
+npm-debug.log
+
+# Dev/test/tooling-only - never needed by any image built from this repo.
+tests/
+sim/
+devtools/
+visualizer/
+info/
+dump*.json
+*.log

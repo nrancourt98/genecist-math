@@ -1,0 +1,39 @@
+# Self-hosted dev/staging deployment - gives a frontend developer a publicly-reachable
+# API to build against. NOT BGaming's submission pipeline (that's just `docker build` +
+# `docker image push` against project/backend's own Dockerfile directly - see that file's
+# header comment); this compose file is purely our own infrastructure, never seen by
+# BGaming. See deploy/README.md for the full explanation and setup steps, including which
+# parts of this file are unverified assumptions about runner_cli's behavior.
+#
+# Run from the repo root:
+#   docker compose -f deploy/docker-compose.yml up -d --build
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: project/backend/Dockerfile
+    environment:
+      # BGaming's own documented convention for dev/stage backend containers (Technical
+      # Documentation PDF, "GodMode" section) - not just a local-only convenience.
+      ENABLE_GOD_MODE: "1"
+      # ASSUMPTION, unverified: runner_cli bundles an RNG microservice reachable on this
+      # port (confirmed as the *localhost* default in BGaming's docs - "for dev_runner by
+      # default it's http://localhost:4002/api" - but not yet confirmed reachable via the
+      # compose service name "runner" inside this multi-container network). Check
+      # `docker compose logs runner` for the port it actually binds, and adjust here if
+      # different.
+      RNG_URL: "http://runner:4002/api"
+    restart: unless-stopped
+    # Deliberately no `ports:` - only the `runner` service should ever reach the backend
+    # directly, never the public internet.
+
+  runner:
+    build:
+      context: ..
+      dockerfile: deploy/runner.Dockerfile
+    ports:
+      - "4000:4000" # nginx on the host reverse-proxies here - see nginx-runner.conf.example
+    depends_on:
+      - backend
+    restart: unless-stopped

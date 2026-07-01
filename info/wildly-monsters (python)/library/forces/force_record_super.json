@@ -1,0 +1,1006 @@
+[
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "basegame"
+            },
+            {
+                "name": "kind",
+                "value": "0"
+            },
+            {
+                "name": "symbol",
+                "value": "scatter"
+            }
+        ],
+        "timesTriggered": 10,
+        "bookIds": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L5"
+            }
+        ],
+        "timesTriggered": 8,
+        "bookIds": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H4"
+            }
+        ],
+        "timesTriggered": 4,
+        "bookIds": [
+            1,
+            2,
+            6,
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H4"
+            }
+        ],
+        "timesTriggered": 5,
+        "bookIds": [
+            1,
+            2,
+            6,
+            7,
+            10
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L3"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            1,
+            6
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L2"
+            }
+        ],
+        "timesTriggered": 5,
+        "bookIds": [
+            1,
+            3,
+            6,
+            7,
+            10
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L3"
+            }
+        ],
+        "timesTriggered": 4,
+        "bookIds": [
+            2,
+            3,
+            4,
+            6
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H2"
+            }
+        ],
+        "timesTriggered": 5,
+        "bookIds": [
+            2,
+            4,
+            5,
+            6,
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H1"
+            }
+        ],
+        "timesTriggered": 7,
+        "bookIds": [
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            10
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H1"
+            }
+        ],
+        "timesTriggered": 7,
+        "bookIds": [
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            10
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L4"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            2,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "5"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H4"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            2,
+            6
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "W"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            2,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H4"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            2,
+            6
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L1"
+            }
+        ],
+        "timesTriggered": 4,
+        "bookIds": [
+            2,
+            4,
+            7,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L4"
+            }
+        ],
+        "timesTriggered": 5,
+        "bookIds": [
+            2,
+            3,
+            4,
+            8,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "5"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L4"
+            }
+        ],
+        "timesTriggered": 3,
+        "bookIds": [
+            2,
+            4,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H1"
+            }
+        ],
+        "timesTriggered": 7,
+        "bookIds": [
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            10
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L1"
+            }
+        ],
+        "timesTriggered": 4,
+        "bookIds": [
+            2,
+            6,
+            7,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "5"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L1"
+            }
+        ],
+        "timesTriggered": 3,
+        "bookIds": [
+            2,
+            7,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "5"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H1"
+            }
+        ],
+        "timesTriggered": 7,
+        "bookIds": [
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            10
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L1"
+            }
+        ],
+        "timesTriggered": 4,
+        "bookIds": [
+            2,
+            5,
+            6,
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L3"
+            }
+        ],
+        "timesTriggered": 1,
+        "bookIds": [
+            4
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H3"
+            }
+        ],
+        "timesTriggered": 3,
+        "bookIds": [
+            4,
+            6,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L5"
+            }
+        ],
+        "timesTriggered": 3,
+        "bookIds": [
+            4,
+            6,
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H3"
+            }
+        ],
+        "timesTriggered": 3,
+        "bookIds": [
+            5,
+            6,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L2"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            6,
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "5"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L3"
+            }
+        ],
+        "timesTriggered": 1,
+        "bookIds": [
+            6
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "5"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L5"
+            }
+        ],
+        "timesTriggered": 3,
+        "bookIds": [
+            6,
+            7,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H2"
+            }
+        ],
+        "timesTriggered": 3,
+        "bookIds": [
+            6,
+            7,
+            10
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "5"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L2"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            6,
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H2"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            6,
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "5"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H2"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            6,
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L2"
+            }
+        ],
+        "timesTriggered": 1,
+        "bookIds": [
+            7
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L5"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            7,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "basegame"
+            },
+            {
+                "name": "kind",
+                "value": "3"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L5"
+            }
+        ],
+        "timesTriggered": 1,
+        "bookIds": [
+            8
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "4"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "L4"
+            }
+        ],
+        "timesTriggered": 2,
+        "bookIds": [
+            8,
+            9
+        ]
+    },
+    {
+        "search": [
+            {
+                "name": "gametype",
+                "value": "freegame"
+            },
+            {
+                "name": "kind",
+                "value": "6"
+            },
+            {
+                "name": "mult",
+                "value": "1"
+            },
+            {
+                "name": "symbol",
+                "value": "H3"
+            }
+        ],
+        "timesTriggered": 1,
+        "bookIds": [
+            9
+        ]
+    }
+]

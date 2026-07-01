@@ -1,0 +1,31 @@
+# Drop into your existing nginx sites (e.g. /etc/nginx/sites-available/), change
+# server_name and the ssl_certificate lines to match your existing domain/certbot setup,
+# symlink into sites-enabled, then `nginx -t && systemctl reload nginx`.
+#
+# Proxies to runner_cli's container, NOT the backend directly - see deploy/README.md for
+# why (the backend's /api is an internal contract between runner_cli and our Node service,
+# never meant to be called directly by a frontend).
+
+server {
+    listen 443 ssl;
+    server_name api-dev.your-domain.example; # CHANGE ME
+
+    # Reuse whatever your existing certbot/ACME setup already manages for this domain -
+    # these two lines are placeholders, not new certs to issue.
+    ssl_certificate     /etc/letsencrypt/live/your-domain.example/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.example/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:4000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name api-dev.your-domain.example; # CHANGE ME
+    return 301 https://$host$request_uri;
+}

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Wildly Monsters — Event Log Visualizer</title>
+<!--
+  Standalone dev/QA tool for visually inspecting a round's event log - open this file
+  directly in a browser, no build step, no server, no dependencies. Not part of the game
+  or its delivery (see docs/architecture.md's judgment-call log, "Dev-only event
+  visualizers") - lives outside project/ on purpose, so it can never end up in the
+  Docker image.
+
+  Expects the same JSON shape devtools/mockRunner.js's --dump flag writes:
+  { "steps": [ <play-result object>, ... ] }, where each play-result object is exactly
+  what a `play` JSON-RPC call returns ({round, game, finance, resp:{events}, final}).
+  Load one via the file picker, paste raw JSON, or drive a live backend directly below
+  (requires the backend running with ENABLE_GOD_MODE=1, for both god_data and the
+  CORS header that lets this page call it cross-origin - see app.js).
+-->
+<style>
+  :root {
+    --bg: #1a1a1f;
+    --panel: #24242c;
+    --border: #3a3a45;
+    --text: #e4e4ea;
+    --muted: #8b8b96;
+    --gold: #d4af37;
+    --cyan: #4dd0e1;
+    --magenta: #c77dff;
+    --green: #6fcf6f;
+    --red: #ff6b6b;
+    --win: #ffd54f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  header h1 { font-size: 16px; margin: 0; margin-right: 16px; color: var(--gold); }
+  textarea {
+    width: 100%;
+    height: 70px;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 6px;
+  }
+  button {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { border-color: var(--gold); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  input[type="text"], input[type="number"], select {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  main { padding: 20px; max-width: 900px; margin: 0 auto; }
+  .liveForm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .liveForm label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+  .liveForm input#liveUrl { width: 220px; }
+  .liveForm input#liveBet { width: 70px; }
+  .liveForm input#liveGod { width: 160px; }
+  #liveStatus { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .sectionDivider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  #status { color: var(--muted); font-size: 13px; }
+  .nav { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .nav span { color: var(--muted); font-size: 13px; }
+  .nav input[type="range"] { flex: 1; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card h2 { margin: 0 0 12px; font-size: 14px; color: var(--gold); }
+  .finance { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  .cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #2e2e38;
+    border: 2px solid transparent;
+  }
+  .cell.win { border-color: var(--win); box-shadow: 0 0 8px var(--win); }
+  .cell.H { color: var(--gold); }
+  .cell.L { color: var(--cyan); }
+  .cell.W { color: var(--magenta); }
+  .cell.S { color: var(--green); }
+  .cell.SW { color: var(--red); }
+  .events { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  .events li {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: monospace;
+  }
+  .events li:last-child { border-bottom: none; }
+  .events .type { color: var(--gold); margin-right: 6px; }
+  #empty { color: var(--muted); padding: 40px; text-align: center; }
+  .rawResponse { margin-top: 16px; }
+  .rawResponse summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+  .rawResponse summary:hover { color: var(--text); }
+  .rawResponse pre {
+    margin: 8px 0 0;
+    max-height: 400px;
+    overflow: auto;
+    background: #1a1a1f;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Event Log Visualizer</h1>
+  <input type="file" id="filePicker" accept="application/json" />
+  <span id="status">No round loaded.</span>
+</header>
+<main>
+  <div class="liveForm">
+    <label>Backend URL
+      <input type="text" id="liveUrl" value="http://127.0.0.1:4051/api" />
+    </label>
+    <label>Mode
+      <select id="liveMode">
+        <option value="base">base</option>
+        <option value="baseplus">baseplus</option>
+        <option value="bonus">bonus</option>
+        <option value="super">super</option>
+      </select>
+    </label>
+    <label>Bet (cents)
+      <input type="number" id="liveBet" value="100" min="1" />
+    </label>
+    <label>God value
+      <input type="text" id="liveGod" value="random" placeholder='"random", an integer, or comma list' />
+    </label>
+    <button id="spinBtn">Spin</button>
+    <button id="newRoundBtn">New Round</button>
+  </div>
+  <div id="liveStatus">No live round started.</div>
+
+  <hr class="sectionDivider" />
+
+  <textarea id="pasteBox" placeholder="...or paste a dump's raw JSON here, then click Load"></textarea>
+  <div style="margin: 8px 0 20px;">
+    <button id="loadPasted">Load pasted JSON</button>
+  </div>
+
+  <div id="empty">Click Spin above, load a round dump (from <code>node devtools/mockRunner.js --dump &lt;file&gt;</code>), or paste JSON to begin.</div>
+
+  <div id="viewer" style="display:none;">
+    <div class="nav">
+      <button id="prevBtn">&larr; Prev</button>
+      <input type="range" id="stepSlider" min="0" max="0" value="0" />
+      <button id="nextBtn">Next &rarr;</button>
+      <span id="stepLabel"></span>
+    </div>
+    <div class="card">
+      <h2 id="stepHeader"></h2>
+      <div class="finance" id="financeLine"></div>
+      <div class="grid" id="board"></div>
+      <ul class="events" id="eventList"></ul>
+      <details class="rawResponse">
+        <summary>Raw response</summary>
+        <pre id="rawResponse"></pre>
+      </details>
+    </div>
+  </div>
+</main>
+
+<script>
+  let steps = [];
+  let current = 0;
+
+  // Live mode: drives a running backend one play() call per "Spin" click, appending each
+  // result to the same `steps`/render() machinery a loaded dump uses. `round`/`game` are
+  // the opaque state a real Runner would hold and resend - see docs/architecture.md "The
+  // step-function". liveRound stays {} between rounds; once a round starts it's whatever
+  // the backend last returned, until `final` resets it back to {}.
+  let liveRound = {};
+  let liveGame = {};
+  let liveFinal = false;
+
+  // Mirrors devtools/mockRunner.js's --god parsing exactly, so the same value syntax
+  // works in both places: a literal "random" (fresh value every call, generated here
+  // rather than node's crypto since this runs in a browser), a single integer, or a
+  // comma-separated list (drained sequentially per RNG draw within one call, see
+  // backend/src/godMode.js).
+  function randomUint32() {
+    return crypto.getRandomValues(new Uint32Array(1))[0];
+  }
+
+  function buildGodData(godArg) {
+    const trimmed = (godArg || "").trim();
+    if (trimmed === "") return undefined;
+    if (trimmed.toLowerCase() === "random") return { random: randomUint32() };
+    const values = trimmed.split(",").map((v) => parseInt(v.trim(), 10));
+    return { random: values.length === 1 ? values[0] : values };
+  }
+
+  // Mirrors playHandler.js's resolveBetMode/PURCHASED_FEATURE_TO_BET_MODE mapping - only
+  // consulted by the backend on a round's first call, ignored afterward.
+  function buildReq(mode, betCents) {
+    const req = { bet: betCents, bet_type: "bet" };
+    if (mode === "bonus") req.purchased_feature = "buy_bonus";
+    else if (mode === "super") req.purchased_feature = "buy_super";
+    else if (mode === "baseplus") req.bet_mode = "baseplus";
+    return req;
+  }
+
+  function setLiveControlsDisabled(disabled) {
+    document.getElementById("liveMode").disabled = disabled;
+    document.getElementById("liveBet").disabled = disabled;
+  }
+
+  async function spinLive() {
+    const url = document.getElementById("liveUrl").value.trim();
+    const isFreshRound = !liveRound || Object.keys(liveRound).length === 0;
+    const spinBtn = document.getElementById("spinBtn");
+    const statusEl = document.getElementById("liveStatus");
+
+    spinBtn.disabled = true;
+    try {
+      const params = {
+        round: liveRound,
+        game: liveGame,
+        req: isFreshRound
+          ? buildReq(document.getElementById("liveMode").value, parseInt(document.getElementById("liveBet").value, 10))
+          : { bet: parseInt(document.getElementById("liveBet").value, 10), bet_type: "bet" },
+        config: { rtp: null, purchased_features: ["buy_bonus", "buy_super"], gamble_limit: null },
+        god_data: buildGodData(document.getElementById("liveGod").value),
+      };
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "play", params }),
+      });
+      const body = await response.json();
+      if (body.error) throw new Error(`play returned a JSON-RPC error: ${JSON.stringify(body.error)}`);
+
+      const result = body.result;
+      if (isFreshRound) {
+        steps = []; // a fresh round replaces whatever was loaded/shown before, not append
+        setLiveControlsDisabled(true);
+      }
+      steps.push(result);
+      current = steps.length - 1;
+      document.getElementById("empty").style.display = "none";
+      document.getElementById("viewer").style.display = "block";
+      render();
+
+      liveRound = result.round;
+      liveGame = result.game;
+      liveFinal = result.final;
+      statusEl.textContent = liveFinal
+        ? `Round finished after ${steps.length} step(s). Click "New Round" to start another.`
+        : `Round in progress - ${steps.length} step(s) so far.`;
+    } catch (err) {
+      statusEl.textContent = `Spin failed: ${err.message}`;
+    } finally {
+      spinBtn.disabled = liveFinal;
+    }
+  }
+
+  function newLiveRound() {
+    liveRound = {};
+    liveGame = {};
+    liveFinal = false;
+    steps = [];
+    current = 0;
+    setLiveControlsDisabled(false);
+    document.getElementById("spinBtn").disabled = false;
+    document.getElementById("liveStatus").textContent = "No live round started.";
+    document.getElementById("viewer").style.display = "none";
+    document.getElementById("empty").style.display = "block";
+  }
+
+  function symbolClass(name) {
+    if (name.startsWith("H")) return "H";
+    if (name.startsWith("L")) return "L";
+    if (name === "W") return "W";
+    if (name === "S") return "S";
+    if (name === "SW") return "SW";
+    return "";
+  }
+
+  function cellLabel(cell) {
+    if (cell.name === "W" && cell.multiplier > 1) return `W${cell.multiplier}x`;
+    return cell.name;
+  }
+
+  function describeEvent(event) {
+    switch (event.type) {
+      case "reveal": return null;
+      case "winInfo": return `${event.wins.length} winning line(s), totalWin=${event.totalWin}`;
+      case "setWin": return `amount=${event.amount} winLevel=${event.winLevel}`;
+      case "setTotalWin": return `amount=${event.amount}`;
+      case "newSwitch": return `+${event.info.spins} spin(s), wild=${event.info.wild}, symbols=[${event.info.switch_symbols.join(", ")}]`;
+      case "newSwitchSpins": return `total spins now ${event.spins}`;
+      case "updateSwitchSpins": return `spins remaining=${event.spins}`;
+      case "switchingSymbols": return `${event.switchedSymbols.length} cell(s) replaced with ${event.switchedSymbols[0]?.symbol ?? "?"}`;
+      case "freeSpinTrigger": return `totalFs=${event.totalFs}`;
+      case "freeSpinRetrigger": return `+${event.fs_added} spins, totalFs=${event.totalFs}`;
+      case "selectedMode": return `${event.mode}`;
+      case "updateFreeSpin": return `${event.amount}/${event.total}`;
+      case "freeSpinEnd": return `amount=${event.amount} winLevel=${event.winLevel}`;
+      case "finalWin": return `amount=${event.amount}`;
+      case "wincap": return `amount=${event.amount} (round forcibly ends)`;
+      default: return JSON.stringify(event);
+    }
+  }
+
+  function winningPositions(events) {
+    const winInfo = events.find((e) => e.type === "winInfo");
+    const switching = events.filter((e) => e.type === "switchingSymbols");
+    const positions = [];
+    if (winInfo) for (const w of winInfo.wins) positions.push(...w.positions);
+    for (const e of switching) positions.push(...e.switchedSymbols);
+    return positions;
+  }
+
+  function render() {
+    const step = steps[current];
+    const events = step.resp.events || [];
+    const reveal = events.find((e) => e.type === "reveal");
+    const winPositions = winningPositions(events);
+
+    document.getElementById("stepHeader").textContent = `Step ${current}`;
+    document.getElementById("stepLabel").textContent = `${current + 1} / ${steps.length}`;
+    document.getElementById("stepSlider").max = steps.length - 1;
+    document.getElementById("stepSlider").value = current;
+    document.getElementById("prevBtn").disabled = current === 0;
+    document.getElementById("nextBtn").disabled = current === steps.length - 1;
+
+    const finance = step.finance[0];
+    document.getElementById("financeLine").textContent =
+      `bet=${finance.bet} win_change=${finance.win_change} final=${step.final}`;
+
+    const board = document.getElementById("board");
+    board.innerHTML = "";
+    if (reveal) {
+      const numReels = reveal.board.length;
+      const numRows = reveal.board[0].length;
+      for (let row = 0; row < numRows; row++) {
+        for (let reel = 0; reel < numReels; reel++) {
+          const cell = reveal.board[reel][row];
+          const div = document.createElement("div");
+          const isWin = winPositions.some((p) => p.reel === reel && p.row === row);
+          div.className = `cell ${symbolClass(cell.name)}${isWin ? " win" : ""}`;
+          div.textContent = cellLabel(cell);
+          board.appendChild(div);
+        }
+      }
+    }
+
+    const list = document.getElementById("eventList");
+    list.innerHTML = "";
+    for (const event of events) {
+      const description = describeEvent(event);
+      if (description === null) continue;
+      const li = document.createElement("li");
+      const typeSpan = document.createElement("span");
+      typeSpan.className = "type";
+      typeSpan.textContent = event.type + ":";
+      li.appendChild(typeSpan);
+      li.appendChild(document.createTextNode(description));
+      list.appendChild(li);
+    }
+
+    document.getElementById("rawResponse").textContent = JSON.stringify(step, null, 2);
+  }
+
+  function loadRound(data) {
+    if (!data || !Array.isArray(data.steps) || data.steps.length === 0) {
+      document.getElementById("status").textContent = "Invalid or empty dump - expected { steps: [...] }.";
+      return;
+    }
+    steps = data.steps;
+    current = 0;
+    document.getElementById("status").textContent = `Loaded ${steps.length} step(s).`;
+    document.getElementById("empty").style.display = "none";
+    document.getElementById("viewer").style.display = "block";
+    render();
+  }
+
+  document.getElementById("filePicker").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        loadRound(JSON.parse(reader.result));
+      } catch (err) {
+        document.getElementById("status").textContent = `Failed to parse: ${err.message}`;
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("spinBtn").addEventListener("click", spinLive);
+  document.getElementById("newRoundBtn").addEventListener("click", newLiveRound);
+
+  document.getElementById("loadPasted").addEventListener("click", () => {
+    try {
+      loadRound(JSON.parse(document.getElementById("pasteBox").value));
+    } catch (err) {
+      document.getElementById("status").textContent = `Failed to parse: ${err.message}`;
+    }
+  });
+
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    if (current > 0) { current -= 1; render(); }
+  });
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    if (current < steps.length - 1) { current += 1; render(); }
+  });
+  document.getElementById("stepSlider").addEventListener("input", (e) => {
+    current = parseInt(e.target.value, 10);
+    render();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (steps.length === 0) return;
+    if (e.key === "ArrowLeft" && current > 0) { current -= 1; render(); }
+    if (e.key === "ArrowRight" && current < steps.length - 1) { current += 1; render(); }
+  });
+</script>
+</body>
+</html>
