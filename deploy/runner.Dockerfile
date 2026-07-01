@@ -15,7 +15,8 @@ FROM debian:bookworm-slim
 # immediately or logs a missing-library error, that's the first thing to check
 # (`docker compose logs runner`) - install whatever's missing here and rebuild.
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /root/.cache/bakeware
 
 COPY docs/runner_cli-x86_64-unknown-linux-gnu /usr/local/bin/runner_cli
 RUN chmod +x /usr/local/bin/runner_cli
