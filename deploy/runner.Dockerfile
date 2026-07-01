@@ -14,6 +14,8 @@ FROM debian:bookworm-slim
 # so runner_cli has not actually been executed yet anywhere. If the container exits
 # immediately or logs a missing-library error, that's the first thing to check
 # (`docker compose logs runner`) - install whatever's missing here and rebuild.
+ENV LANG=C.UTF-8
+
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /root/.cache/bakeware
@@ -33,4 +35,4 @@ ENTRYPOINT ["runner_cli"]
 # reachable on port 80 per that Dockerfile's BACKEND_PORT=80. Flag names/defaults are
 # unverified against this specific binary - run `runner_cli --help` on the server if this
 # doesn't start cleanly.
-CMD ["-p", "4000", "-c", "/runner/config.yml", "-b", "http://backend:80/api"]
+CMD ["-p", "4000", "-c", "/runner/config.yml"]
