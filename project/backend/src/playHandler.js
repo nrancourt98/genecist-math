@@ -58,7 +58,7 @@ async function handlePlay(params) {
     round: isRoundFinal ? {} : nextRoundState,
     game: game || {},
     finance,
-    resp: { events },
+    resp: { events, bet: roundState.betAmountCents },
     final: isRoundFinal,
   };
 }
