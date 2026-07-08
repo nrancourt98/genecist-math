@@ -34,6 +34,7 @@ function resolveBetMode(req) {
 async function handlePlay(params) {
   const { round, game, req, god_data } = params;
   const fresh = isFreshRound(round);
+  console.log(`[play] req.bet=${req.bet} purchased_feature=${req.purchased_feature ?? "-"} fresh=${fresh}`);
 
   const betAmountCents = Math.trunc(Number(req.bet));
   const roundState = fresh ? createInitialRoundState(resolveBetMode(req), betAmountCents) : round;
