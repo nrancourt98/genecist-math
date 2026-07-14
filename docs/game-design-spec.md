@@ -1,4 +1,4 @@
-# Wildly Monsters — Game Design Spec
+# Genecist — Game Design Spec
 
 Authoritative rules for the JS port. Source of truth: `./info/wildly-monsters (python)/gamestate.py` and `game_config.py`, corrected per direct confirmation with the game's designer where the literal Python source contained temporary/test-only code (see "Corrections vs. literal Python source" below). The example records in `./info/books/*.jsonl.zst` are a secondary reference for event vocabulary/shape only — they predate the corrected mechanics and must not be used to infer trigger probabilities.
 

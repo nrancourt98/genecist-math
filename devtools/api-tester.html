@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BGaming API Tester</title>
+<style>
+:root {
+  --bg:         #0D1117;
+  --surface:    #161B22;
+  --surface-2:  #21262D;
+  --border:     #30363D;
+  --text:       #E6EDF3;
+  --muted:      #7D8590;
+  --accent:     #388BFD;
+  --accent-bg:  rgba(56,139,253,0.12);
+  --success:    #3FB950;
+  --success-bg: rgba(63,185,80,0.1);
+  --error:      #F85149;
+  --error-bg:   rgba(248,81,73,0.1);
+  --warning:    #D29922;
+  --code-bg:    #090D12;
+}
+@media (prefers-color-scheme: light) { :root {
+  --bg:         #F6F8FA;
+  --surface:    #FFFFFF;
+  --surface-2:  #F0F3F6;
+  --border:     #D0D7DE;
+  --text:       #1F2328;
+  --muted:      #636C76;
+  --accent:     #0969DA;
+  --accent-bg:  rgba(9,105,218,0.08);
+  --success:    #1A7F37;
+  --success-bg: rgba(26,127,55,0.08);
+  --error:      #CF222E;
+  --error-bg:   rgba(207,34,46,0.08);
+  --warning:    #9A6700;
+  --code-bg:    #F0F3F6;
+}}
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+.app {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background .3s;
+}
+.status-dot.ok  { background: var(--success); }
+.status-dot.err { background: var(--error); }
+.proxy-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.panel-label {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.panel-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.field input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: "Consolas", "Menlo", "Monaco", monospace;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  width: 100%;
+  transition: border-color .15s;
+}
+.field input:focus { border-color: var(--accent); }
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 130px;
+  gap: 10px;
+}
+@media (max-width: 500px) { .row-2 { grid-template-columns: 1fr; } }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  transition: opacity .15s, transform .1s;
+  line-height: 1;
+}
+.btn:active:not(:disabled) { transform: scale(.97); }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { opacity: .88; }
+.btn-ghost {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn-danger:hover:not(:disabled) { border-color: var(--error); color: var(--error); }
+.sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+
+.round-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: 3px 10px;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+.pill-idle   { background: var(--surface-2); color: var(--muted);   border-color: var(--border); }
+.pill-active { background: var(--accent-bg); color: var(--accent);  border-color: var(--accent); }
+.pill-done   { background: var(--success-bg);color: var(--success); border-color: var(--success); }
+.pill-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.step-label { font-size: 12px; color: var(--muted); }
+
+.log { display: flex; flex-direction: column; gap: 10px; }
+.log-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 13px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  line-height: 1.8;
+}
+.log-empty code {
+  font-family: "Consolas","Menlo","Monaco",monospace;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.rcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.rcard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.rcard-method { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+.rcard-time {
+  font-family: "Consolas","Menlo","Monaco",monospace;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.kv-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  border-radius: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.chip.hi   { border-color: var(--accent);  background: var(--accent-bg); }
+.chip.hi .cv { color: var(--accent); }
+.chip.ok   { border-color: var(--success); background: var(--success-bg); }
+.chip.ok .cv { color: var(--success); }
+.chip.warn { border-color: var(--warning); background: rgba(210,153,34,.08); }
+.chip.warn .cv { color: var(--warning); }
+.ck {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.cv {
+  font-family: "Consolas","Menlo","Monaco",monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.events-list {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.event-tag {
+  font-family: "Consolas","Menlo","Monaco",monospace;
+  font-size: 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  color: var(--muted);
+}
+.rcard-error { padding: 12px 14px; }
+.error-box {
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: var(--error);
+  font-size: 13px;
+}
+.error-box strong { display: block; margin-bottom: 4px; }
+.json-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 8px 14px;
+  text-align: left;
+  border-top: 1px solid var(--border);
+}
+.json-toggle:hover { color: var(--text); }
+.chevron { display: inline-block; transition: transform .18s; font-size: 10px; }
+.json-toggle.open .chevron { transform: rotate(90deg); }
+.json-pane { display: none; padding: 0 14px 12px; }
+.json-pane.open { display: block; }
+.json-pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: "Consolas","Menlo","Monaco",monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text);
+  max-height: 320px;
+  overflow-y: auto;
+}
+.resume-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: none;
+}
+.resume-panel.visible { display: block; }
+.resume-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border);
+}
+.resume-cell {
+  background: var(--surface);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.resume-cell .ck { font-size: 10px; }
+.resume-cell .cv { font-size: 14px; }
+.resume-cell.hi  { background: var(--accent-bg); }
+.resume-cell.ok  { background: var(--success-bg); }
+.symbols-row {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+.symbols-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.sym-tag {
+  font-family: "Consolas","Menlo","Monaco",monospace;
+  font-size: 12px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.sym-empty {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="status-dot" id="dot"></div>
+    <h1>BGaming API Tester</h1>
+    <div class="proxy-badge">Proxy Mode</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Connection</div>
+    <div class="panel-body">
+      <div class="field">
+        <label>API URL <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(leave as <code style="font-size:11px;background:var(--surface-2);padding:1px 4px;border-radius:3px">/api</code> when using the proxy)</span></label>
+        <input id="url" type="text" value="/api" spellcheck="false" autocomplete="off" />
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>Session Token</label>
+          <input id="token" type="text" placeholder="dev0000000000000000000000000001" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Bet (subunits)</label>
+          <input id="bet" type="number" value="100" min="1" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Round Control</div>
+    <div class="panel-body">
+      <div class="round-status">
+        <div class="pill pill-idle" id="pill">
+          <span class="pill-dot"></span>
+          <span id="pill-text">No active round</span>
+        </div>
+        <span class="step-label" id="step-label"></span>
+        <div class="pill pill-idle" id="lock-pill" style="margin-left:auto;">
+          <span class="pill-dot"></span>
+          <span id="lock-text">No state_lock</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="doInit()">Init Session</button>
+        <div class="sep"></div>
+        <button class="btn btn-ghost" onclick="startPlay('base')">Base Spin</button>
+        <button class="btn btn-ghost" onclick="startPlay('buy_bonus')">Buy Bonus</button>
+        <button class="btn btn-ghost" onclick="startPlay('buy_super')">Buy Super</button>
+        <div class="sep"></div>
+        <button class="btn btn-ghost" id="continueBtn" disabled onclick="continuePlay()">Next Step</button>
+        <button class="btn btn-danger" onclick="resetRound()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="resume-panel" id="resumePanel">
+    <div class="panel-label">Resume State <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px">— what resp.resumeState contains after the last spin</span></div>
+    <div class="resume-grid" id="resumeGrid"></div>
+    <div class="symbols-row" id="symbolsRow"></div>
+  </div>
+
+  <div class="log" id="log">
+    <div class="log-empty">
+      Start with <code>Init Session</code> to confirm connectivity,<br>
+      then use the round controls to step through a game.<br><br>
+      Each call shows <strong>resp.bet</strong> highlighted so you can verify it matches what you sent.
+    </div>
+  </div>
+
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'bgaming_proxy_v1';
+  var log = document.getElementById('log');
+  var inRound = false;
+  var stepCount = 0;
+  var stateLock = null;
+
+  var saved = (function () { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (_) { return {}; } })();
+  if (saved.token) document.getElementById('token').value = saved.token;
+  if (saved.bet)   document.getElementById('bet').value   = saved.bet;
+
+  ['token', 'bet'].forEach(function (k) {
+    document.getElementById(k).addEventListener('input', function () {
+      localStorage.setItem(KEY, JSON.stringify({ token: document.getElementById('token').value, bet: document.getElementById('bet').value }));
+    });
+  });
+
+  function cfg() {
+    return {
+      url:   document.getElementById('url').value.trim(),
+      token: document.getElementById('token').value.trim(),
+      bet:   parseInt(document.getElementById('bet').value, 10) || 100,
+    };
+  }
+
+  function rpc(method, params, cb) {
+    var c = cfg();
+    var url = c.url || '/api';
+    fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method: method, params: params }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
+        return r.json();
+      })
+      .then(function (d) { cb(null, d); })
+      .catch(function (e) { cb(e, null); });
+  }
+
+  window.doInit = function () {
+    var c = cfg();
+    call('init', { token: c.token }, 'init');
+  };
+
+  window.startPlay = function (mode) {
+    var c = cfg();
+    resetRound();
+    var req = { bet: c.bet };
+    if (mode !== 'base') req.purchased_feature = mode;
+    var params = { token: c.token, req: req };
+    if (stateLock) params.state_lock = stateLock;
+    call('play', params, 'play · ' + (mode === 'base' ? 'base spin' : mode));
+  };
+
+  window.continuePlay = function () {
+    var c = cfg();
+    var params = { token: c.token, req: { bet: c.bet } };
+    if (stateLock) params.state_lock = stateLock;
+    call('play', params, 'play · next step');
+  };
+
+  window.resetRound = function () {
+    inRound = false;
+    stepCount = 0;
+    stateLock = null;
+    setPill('idle');
+    setLockPill(false);
+    document.getElementById('continueBtn').disabled = true;
+    document.getElementById('resumePanel').classList.remove('visible');
+    document.getElementById('resumeGrid').innerHTML = '';
+    document.getElementById('symbolsRow').innerHTML = '';
+  };
+
+  function updateResumePanel(rs) {
+    if (!rs) return;
+    var panel = document.getElementById('resumePanel');
+    var grid  = document.getElementById('resumeGrid');
+    var symsRow = document.getElementById('symbolsRow');
+    panel.classList.add('visible');
+    grid.innerHTML = '';
+
+    var cells = [
+      { k: 'phase',                 v: rs.phase                ?? '—',    cls: '' },
+      { k: 'mode',                  v: rs.mode                 ?? 'none', cls: rs.mode ? 'hi' : '' },
+      { k: 'freeSpinsRemaining',    v: rs.freeSpinsRemaining   ?? '—',    cls: rs.freeSpinsRemaining > 0 ? 'hi' : '' },
+      { k: 'totalFreeSpins',        v: rs.totalFreeSpins       ?? '—',    cls: '' },
+      { k: 'switchSpinsRemaining',  v: rs.switchSpinsRemaining ?? 0,      cls: rs.switchSpinsRemaining > 0 ? 'hi' : '' },
+      { k: 'switchWild',            v: rs.switchWild ? 'yes' : 'no',      cls: '' },
+      { k: 'freegameWinCents',      v: rs.freegameWinCents     ?? 0,      cls: rs.freegameWinCents > 0 ? 'ok' : '' },
+    ];
+
+    cells.forEach(function (c) {
+      var cell = document.createElement('div');
+      cell.className = 'resume-cell' + (c.cls ? ' ' + c.cls : '');
+      var ck = document.createElement('span'); ck.className = 'ck'; ck.textContent = c.k;
+      var cv = document.createElement('span'); cv.className = 'cv'; cv.textContent = c.v;
+      cell.appendChild(ck); cell.appendChild(cv);
+      grid.appendChild(cell);
+    });
+
+    // Switch symbols row
+    symsRow.innerHTML = '';
+    var lbl = document.createElement('span');
+    lbl.className = 'symbols-label';
+    lbl.textContent = 'switchSymbols';
+    symsRow.appendChild(lbl);
+
+    var syms = rs.switchSymbols || [];
+    if (syms.length === 0) {
+      var empty = document.createElement('span');
+      empty.className = 'sym-empty';
+      empty.textContent = 'none';
+      symsRow.appendChild(empty);
+    } else {
+      syms.forEach(function (s) {
+        var tag = document.createElement('span');
+        tag.className = 'sym-tag';
+        tag.textContent = s;
+        symsRow.appendChild(tag);
+      });
+    }
+  }
+
+  function setLockPill(hasLock) {
+    var pill = document.getElementById('lock-pill');
+    var text = document.getElementById('lock-text');
+    pill.className = 'pill ' + (hasLock ? 'pill-active' : 'pill-idle');
+    text.textContent = hasLock ? 'state_lock ✓' : 'No state_lock';
+  }
+
+  function call(method, params, label) {
+    var t0 = performance.now();
+    rpc(method, params, function (err, data) {
+      var ms = Math.round(performance.now() - t0);
+      var dot = document.getElementById('dot');
+
+      if (err) {
+        dot.className = 'status-dot err';
+      } else {
+        dot.className = 'status-dot ok';
+        if (data && data.result) {
+          // state_lock can appear at the result level on both init and play responses
+          var newLock = data.result.state_lock;
+          if (newLock) {
+            stateLock = newLock;
+            setLockPill(true);
+          }
+          if (method === 'play') {
+            stepCount++;
+            var state = data.result.state || data.result;
+            var isFinal = state.final || false;
+            if (isFinal) {
+              inRound = false;
+              document.getElementById('continueBtn').disabled = true;
+              setPill('done');
+            } else {
+              inRound = true;
+              document.getElementById('continueBtn').disabled = false;
+              setPill('active');
+            }
+          }
+        }
+      }
+
+      render(label, data, err, ms);
+    });
+  }
+
+  function setPill(state) {
+    var pill = document.getElementById('pill');
+    var text = document.getElementById('pill-text');
+    var lbl  = document.getElementById('step-label');
+    pill.className = 'pill';
+    if (state === 'idle') {
+      pill.classList.add('pill-idle');
+      text.textContent = 'No active round';
+      lbl.textContent = '';
+    } else if (state === 'active') {
+      pill.classList.add('pill-active');
+      text.textContent = 'Round in progress';
+      lbl.textContent = 'step ' + stepCount;
+    } else if (state === 'done') {
+      pill.classList.add('pill-done');
+      text.textContent = 'Round complete';
+      lbl.textContent = stepCount + ' step' + (stepCount !== 1 ? 's' : '');
+    }
+  }
+
+  function render(label, data, err, ms) {
+    log.querySelectorAll('.log-empty').forEach(function (el) { el.remove(); });
+
+    var card = document.createElement('div');
+    card.className = 'rcard';
+
+    var hdr = document.createElement('div');
+    hdr.className = 'rcard-header';
+    var methodSpan = document.createElement('span');
+    methodSpan.className = 'rcard-method';
+    methodSpan.textContent = label;
+    var timeSpan = document.createElement('span');
+    timeSpan.className = 'rcard-time';
+    timeSpan.textContent = ms + 'ms';
+    hdr.appendChild(methodSpan);
+    hdr.appendChild(timeSpan);
+    card.appendChild(hdr);
+
+    if (err) {
+      var errWrap = document.createElement('div');
+      errWrap.className = 'rcard-error';
+      var box = document.createElement('div');
+      box.className = 'error-box';
+      var strong = document.createElement('strong');
+      strong.textContent = err.message;
+      box.appendChild(strong);
+      errWrap.appendChild(box);
+      card.appendChild(errWrap);
+      log.prepend(card);
+      return;
+    }
+
+    var result     = (data && data.result) || {};
+    var state      = result.state || result;
+    var resp       = state.resp || {};
+    var finance    = state.finance || result.finance;
+    var f          = Array.isArray(finance) ? finance[0] : null;
+    var events     = resp.events || [];
+    var resumeState = resp.resumeState || null;
+    var balance    = result.balance || state.balance;
+    var phase      = (state.round && state.round.phase) || state.phase;
+    var isFinal    = state.final;
+
+    if (resumeState) updateResumePanel(resumeState);
+
+    var chips = [];
+    if (resp.bet      !== undefined) chips.push({ k: 'resp.bet',     v: resp.bet,       cls: 'hi' });
+    if (f && f.base   !== undefined) chips.push({ k: 'finance.base', v: f.base,         cls: '' });
+    if (f && f.bet    !== undefined) chips.push({ k: 'finance.bet',  v: f.bet,          cls: f.bet < 0 ? 'warn' : '' });
+    if (f && f.win_change !== undefined) chips.push({ k: 'win_change', v: f.win_change,  cls: f.win_change > 0 ? 'ok' : '' });
+    if (balance       !== undefined) chips.push({ k: 'balance',      v: balance,        cls: '' });
+    if (phase)                       chips.push({ k: 'phase',        v: phase,          cls: '' });
+    if (isFinal       !== undefined) chips.push({ k: 'final',        v: String(isFinal),cls: isFinal ? 'ok' : '' });
+
+    if (chips.length) {
+      var kvRow = document.createElement('div');
+      kvRow.className = 'kv-row';
+      chips.forEach(function (c) {
+        var chip = document.createElement('div');
+        chip.className = 'chip' + (c.cls ? ' ' + c.cls : '');
+        var ck = document.createElement('span');
+        ck.className = 'ck';
+        ck.textContent = c.k;
+        var cv = document.createElement('span');
+        cv.className = 'cv';
+        cv.textContent = c.v;
+        chip.appendChild(ck);
+        chip.appendChild(cv);
+        kvRow.appendChild(chip);
+      });
+      card.appendChild(kvRow);
+    }
+
+    if (events.length) {
+      var evRow = document.createElement('div');
+      evRow.className = 'events-list';
+      events.forEach(function (ev) {
+        var tag = document.createElement('span');
+        tag.className = 'event-tag';
+        tag.textContent = ev.type || '?';
+        evRow.appendChild(tag);
+      });
+      card.appendChild(evRow);
+    }
+
+    var toggle = document.createElement('button');
+    toggle.className = 'json-toggle';
+    var chev = document.createElement('span');
+    chev.className = 'chevron';
+    chev.textContent = '▶';
+    toggle.appendChild(chev);
+    toggle.appendChild(document.createTextNode(' Raw JSON'));
+
+    var pane = document.createElement('div');
+    pane.className = 'json-pane';
+    var pre = document.createElement('pre');
+    pre.className = 'json-pre';
+    pre.textContent = JSON.stringify(data, null, 2);
+    pane.appendChild(pre);
+
+    toggle.addEventListener('click', function () {
+      var open = pane.classList.toggle('open');
+      toggle.classList.toggle('open', open);
+    });
+
+    card.appendChild(toggle);
+    card.appendChild(pane);
+    log.prepend(card);
+  }
+})();
+</script>
+</body>
+</html>

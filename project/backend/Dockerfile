@@ -1,5 +1,5 @@
 # Build context MUST be the repo root (not project/backend/), e.g.:
-#   docker build -f project/backend/Dockerfile -t wildly-monsters-backend .
+#   docker build -f project/backend/Dockerfile -t genecist-backend .
 # This is required because the backend requires the sibling ../../engine package,
 # which must be copied into the image alongside the backend itself.
 

@@ -4,7 +4,7 @@
 # the game is actually submitted. See deploy/README.md.
 #
 # Build context MUST be the repo root, same reason as project/backend/Dockerfile:
-#   docker build -f deploy/runner.Dockerfile -t wildly-monsters-runner .
+#   docker build -f deploy/runner.Dockerfile -t genecist-runner .
 
 FROM debian:bookworm-slim
 

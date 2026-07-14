@@ -55,11 +55,23 @@ async function handlePlay(params) {
     },
   ];
 
+  const rs = nextRoundState;
+  const resumeState = {
+    phase:                rs.phase,
+    mode:                 rs.freeSpin?.mode         ?? null,
+    freeSpinsRemaining:   rs.freeSpin?.fs           ?? null,
+    totalFreeSpins:       rs.freeSpin?.totFs        ?? null,
+    switchSymbols:        rs.switch.symbols,
+    switchWild:           rs.switch.wild,
+    switchSpinsRemaining: rs.switch.spins,
+    freegameWinCents:     centiMultiplierToCents(rs.freegameWinsCenti, rs.betAmountCents),
+  };
+
   return {
     round: isRoundFinal ? {} : nextRoundState,
     game: game || {},
     finance,
-    resp: { events, bet: roundState.betAmountCents },
+    resp: { events, bet: roundState.betAmountCents, resumeState },
     final: isRoundFinal,
   };
 }
