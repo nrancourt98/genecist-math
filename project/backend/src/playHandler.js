@@ -59,7 +59,7 @@ async function handlePlay(params) {
   const resumeState = {
     phase:                rs.phase,
     mode:                 rs.freeSpin?.mode         ?? null,
-    freeSpinsRemaining:   rs.freeSpin?.fs           ?? null,
+    freeSpinsUsed:        rs.freeSpin?.fs            ?? null,
     totalFreeSpins:       rs.freeSpin?.totFs        ?? null,
     switchSymbols:        rs.switch.symbols,
     switchWild:           rs.switch.wild,
