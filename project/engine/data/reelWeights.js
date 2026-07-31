@@ -28,7 +28,7 @@ const BR0_WEIGHTS = {
   L2: 210,
   L1: 240,
   W: 50,
-  S: 17,
+  S: 14,
 };
 
 // Every non-S weight here is the original table x10 (e.g. H5 1->10) purely so S can be
