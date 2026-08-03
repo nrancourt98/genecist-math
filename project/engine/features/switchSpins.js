@@ -7,7 +7,31 @@ const {
   RESTACK_DROP_CHANCE_ONE_IN,
   SYMBOL_CAP,
   BLOCKS_AT_SYMBOL_CAP,
+  SWITCH_SOURCE_WEIGHTS,
+  WILD_CHANCE_ONE_IN,
 } = require("../config/switchTables");
+
+/**
+ * Weighted sample without replacement from `pool` using per-symbol weights from
+ * SWITCH_SOURCE_WEIGHTS. Falls back to weight 1 for any symbol not in the table.
+ * Uses pickFromBag (weighted-by-repetition) iteratively so each successive pick
+ * excludes already-chosen symbols without needing a custom RNG method.
+ */
+function weightedSampleSymbols(pool, count, rng) {
+  const remaining = pool.slice();
+  const result = [];
+  while (result.length < count && remaining.length > 0) {
+    const bag = [];
+    for (const sym of remaining) {
+      const w = SWITCH_SOURCE_WEIGHTS[sym] ?? 1;
+      for (let i = 0; i < w; i++) bag.push(sym);
+    }
+    const chosen = rng.pickFromBag(bag);
+    result.push(chosen);
+    remaining.splice(remaining.indexOf(chosen), 1);
+  }
+  return result;
+}
 
 /** @returns {{spins: number, symbols: string[], wild: boolean|null}} */
 function createInitialSwitchState() {
@@ -62,8 +86,19 @@ function maybeDropSwitch(switchState, gameMode, rng) {
  * @returns {{spinsAwarded: number, wild: boolean, symbols: string[], totalSpins: number}}
  */
 function resolveSwitchAward(switchState, gameMode, rng) {
-  if (switchState.spins === 0) {
-    switchState.wild = rng.randBool();
+  // In S-mode the wild/H5 substitution target is locked on the first drop and stays
+  // fixed for the entire session as the pool accumulates. Re-rolling it mid-session
+  // would silently flip all accumulated symbols to a different target, which would be
+  // confusing and cause inconsistent board visuals. In all other modes, re-roll on
+  // each new sequence start as usual.
+  // Per-mode W probability is controlled by WILD_CHANCE_ONE_IN (base: 50%, R/S: tunable).
+  const isNewSequence = switchState.spins === 0;
+  const sModeLocked = gameMode === "S" && switchState.symbols.length > 0;
+  if (isNewSequence && !sModeLocked) {
+    const wildChanceOneIn = WILD_CHANCE_ONE_IN[gameMode] ?? 2;
+    // 0 means "always H5, never W" (allows a mode to be fully H5-only without needing
+    // a separate flag); otherwise 1-in-N chance of W (e.g. 2 = 50%, 5 = 20%).
+    switchState.wild = wildChanceOneIn > 0 && rng.randInt(wildChanceOneIn) === 0;
   }
 
   const spinsBag = gameMode === "S" ? SPINS_AWARD_BAG_S : SPINS_AWARD_BAG_BASE_AND_R;
@@ -74,7 +109,7 @@ function resolveSwitchAward(switchState, gameMode, rng) {
   numToAdd = Math.min(numToAdd, available.length);
 
   if (numToAdd > 0) {
-    const newSymbols = rng.sampleWithoutReplacement(available, numToAdd);
+    const newSymbols = weightedSampleSymbols(available, numToAdd, rng);
     switchState.symbols.push(...newSymbols);
   }
 

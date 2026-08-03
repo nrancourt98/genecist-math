@@ -206,7 +206,12 @@ function resolveFreeSpinStep(state, rng, out, reelProvider) {
 
   out.push(events.revealEvent(board, "freegame", randomPaddingPositions(rng, reelStrip), [0, 0, 0, 0, 0, 0]));
 
-  const changes = sequenceWasActive ? applySwitchReplacement(board, state.switch) : [];
+  // S-mode: once any symbols enter the pool they stay permanently active — replacement
+  // runs on every subsequent S-mode spin (not just during active switch sequences).
+  // R-mode and base keep the original sequenceWasActive gate (R clears symbols anyway;
+  // base gate prevents the catastrophic always-replacing bug described at line 82).
+  const sModePoolActive = gameMode === "S" && state.switch.symbols.length > 0;
+  const changes = (sequenceWasActive || sModePoolActive) ? applySwitchReplacement(board, state.switch) : [];
   if (changes.length > 0) out.push(events.switchingSymbolsEvent(changes));
   assignWildMultipliers(board, gameMode, rng); // picks up any switch-created W cells
 

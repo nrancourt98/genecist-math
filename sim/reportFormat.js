@@ -69,23 +69,25 @@ function formatReport(mode, n, s, elapsedMs, numWorkers) {
   lines.push(row('  Avg win / round',   mult(s.avgWinMultiplier, 3)));
   lines.push(row('  Std dev of win',    mult(s.stdDevWinMultiplier, 3)));
   lines.push(row('  Max observed win',  mult(s.maxWinMultiplier, 2)));
-  lines.push(row('  Wincap hit rate',   pct(s.wincapRate, 4)));
+  const wincapOneIn = s.wincapRate > 0 ? ` (1 in ${commas(Math.round(1 / s.wincapRate))})` : '';
+  lines.push(row('  Wincap hit rate', pct(s.wincapRate, 4) + wincapOneIn));
 
   // ── Win Distribution ──────────────────────────────────────────────────────────
   lines.push('');
   lines.push(sectionLine('Win Distribution'));
-  lines.push('  ' + pad('Range', 14) + pad('Count', 12, true) + '  ' + pad('Freq', 8, true) + '  Histogram');
+  lines.push('  ' + pad('Range', 14) + pad('Count', 12, true) + '  ' + pad('1-in-N', 12, true) + '  Histogram');
   lines.push('  ' + THIN.slice(0, COL_WIDTH - 2));
   const maxBucket = Math.max(...s.winBuckets);
   for (let i = 0; i < NUM_BUCKETS; i++) {
     const count   = s.winBuckets[i];
     const freq    = count / n;
     const barStr  = bar(maxBucket > 0 ? count / maxBucket : 0, BAR_WIDTH);
+    const oneInN  = freq > 0 ? `1 in ${commas(Math.round(1 / freq))}` : '—';
     lines.push(
       '  ' +
       BUCKET_LABELS[i] + '  ' +
       pad(commas(count), 10, true) + '  ' +
-      pad(pct(freq, 3), 8, true) + '  ' +
+      pad(oneInN, 12, true) + '  ' +
       barStr
     );
   }

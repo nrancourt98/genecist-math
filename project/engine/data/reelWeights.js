@@ -27,8 +27,8 @@ const BR0_WEIGHTS = {
   L3: 180,
   L2: 210,
   L1: 240,
-  W: 50,
-  S: 14,
+  W: 38,  // 50→30 dropped basegame too far (~39%); 38 interpolates to ~52% target
+  S: 17,  // 16→17: pushes R trigger from ~1/296 toward ~1/250 target (cubic scatter effect)
 };
 
 // Every non-S weight here is the original table x10 (e.g. H5 1->10) purely so S can be
@@ -46,7 +46,7 @@ const FR0_WEIGHTS = {
   L3: 110,
   L2: 120,
   L1: 130,
-  W: 30,
+  W: 24,  // from 25 (100.3% at 10M), targeting 96% with ~2.9%/unit sensitivity
   S: 17,
 };
 
@@ -61,7 +61,7 @@ const FR1_WEIGHTS = {
   L3: 11,
   L2: 12,
   L1: 13,
-  W: 9,
+  W: 9,   // from 7 (87.8% at 5M), adding +2 to recover toward 96%
   S: 2,
 };
 
