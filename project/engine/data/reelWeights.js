@@ -46,7 +46,7 @@ const FR0_WEIGHTS = {
   L3: 110,
   L2: 120,
   L1: 130,
-  W: 24,  // from 25 (100.3% at 10M), targeting 96% with ~2.9%/unit sensitivity
+  W: 22,  // calibrated: 96.9% at 10M with INITIAL.R/S=25, H5-only bonus switch, FR1 W=9
   S: 17,
 };
 
@@ -61,7 +61,7 @@ const FR1_WEIGHTS = {
   L3: 11,
   L2: 12,
   L1: 13,
-  W: 9,   // from 7 (87.8% at 5M), adding +2 to recover toward 96%
+  W: 9,   // calibrated alongside FR0 W=22 for 96.9% total at 10M
   S: 2,
 };
 

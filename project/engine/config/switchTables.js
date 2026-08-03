@@ -53,7 +53,11 @@ const BLOCKS_AT_SYMBOL_CAP = { base: true, R: false, S: true };
 // paying symbol (H5). Expressed as 1-in-N: N=2 → 50%, N=5 → 20%, N=10 → 10%.
 // Base game stays at 50/50 (randBool). Bonus modes can be dialled toward H5 to reduce
 // per-trigger RTP contribution while keeping trigger frequency high.
-const WILD_CHANCE_ONE_IN = { base: 2, R: 0, S: 0 }; // base: 50%; R/S: 0 = always H5, no W — floor test
+// R/S: 0 = always H5, never W. Bonus switch fires frequently (INITIAL=25, ~46% per session)
+// but always creates H5 stacks rather than wild floods — this is what allows ~96% total RTP
+// at high trigger frequency. Set R/S to a positive integer (e.g. 10 = 10%) to add occasional
+// wild-mode sequences back, but compensate by lowering FR0/FR1 W by ~1-2 units each.
+const WILD_CHANCE_ONE_IN = { base: 2, R: 0, S: 0 };
 
 // Weighted selection for switch-target symbols: higher weight = more likely to be chosen.
 // Biased toward H symbols (rare on board: 0.8–1.8 expected cells per spin) vs L symbols
