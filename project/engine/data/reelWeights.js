@@ -3,64 +3,107 @@
 // is the tunable input for math balancing. SW is deliberately absent from every table: it
 // never appears on a natural reel strip, it's always injected programmatically at a
 // random position when a switch-spins drop occurs (see engine/features/switchSpins.js).
-//
-// These replace the original Python prototype's reel strips entirely (per the designer:
-// gamestate.py's math was never balanced - that happens separately, after simulation -
-// so its reel strips aren't meaningful RTP-wise and are not ported). Tuned empirically
-// against project/sim/simulate.js; see docs/architecture.md's judgment-call log for the
-// target metrics and iteration history.
 
-// Per-reel weight tables. Only reel 0 is modified; reels 1-5 use original calibrated
-// weights. Reel 0 is the payline anchor reel — the symbol there determines whether any
-// win can start at all on a given payline.
+// --- CLUSTER STRIP DESIGN (BR0) ---
 //
-// CALIBRATION NOTE — pool index stability with fixed seed (20260619):
-// The strip generator builds a flat pool array (pool[i] = symbol for each weight unit i).
-// With a fixed seed, the realized S count in a 1000-row strip depends on WHICH pool
-// indices S occupies: different ranges get different hit frequencies from the RNG sequence.
-// Moving S (e.g., by changing W weight) shifts its pool range and changes trigger rate
-// unpredictably. The HOLD phantom filler solves this: HOLD fills the space freed by
-// reducing W from 28→2, keeping all subsequent symbols (W and S) at the SAME pool
-// positions they occupied in the original W=28 config. S stays at pool[391..402] regardless
-// of W value, so trigger rate is stable across W changes.
+// Each reel column is generated independently. At each position the generator either:
+//   A) Cluster mode: picks a symbol from clusterWeights, fills clusterMinLen–clusterMaxLen
+//      consecutive rows with that symbol, then advances.
+//   B) Random mode: picks one symbol from randomWeights, fills exactly one row, advances.
 //
-// HOLD is non-paying (not in the paytable, not a wild): lineEvaluator returns null when
-// HOLD is the anchor. It functions identically to BLANK for line evaluation purposes.
+// clusterProbability is the per-decision probability of mode A (not the strip fraction).
+// Relationship: cluster_fraction ≈ p × avgLen / (1 + p × (avgLen − 1))
+//   avgLen = (clusterMinLen + clusterMaxLen) / 2 = 6.5
+//   p = 0.05  →  ~25% cluster coverage
+//   p = 0.09  →  ~40% cluster coverage
+//   p = 0.04  →  ~20% cluster coverage
 //
-// Result: L 3OAK drops from 70% L-density on all reels to 18.3% on reel 0 (via BLANK),
-// W-sub backdoor closes (HOLD replaces 26/28 of the old W slots), and trigger stays at
-// the calibrated 1/169 rate. P(any L win) ≈ 13.6% = 1/7.4 (target 1/6 max, 1/7-1/10 ok).
-const _BR0_ANCHOR = {  // reel 0 ONLY — total 836 (S at pool[391-402], same as original)
-  H5: 10, H4: 30, H3: 40, H2: 60, H1: 70,  // H=210, 25.1% density (unchanged)
-  L5: 22, L4: 25, L3: 30, L2: 35, L1: 41,  // L=153, 18.3% density (down from 70.1%)
-  HOLD: 26,  // phantom non-paying filler: occupies pool[363-388] (old W range minus 2)
-             // pushes W and S back to their original pool positions — see note above
-  W: 2,      // 0.24%: closes W→L wild-sub backdoor (W on reel0 was 45% of all L wins)
-  S: 12,     // pool[391-402] — SAME as original W=28 config → trigger rate stable
-  BLANK: 433, // main non-paying filler: blocks paylines when anchor (pool[403-835])
-};
-const _BR0_STANDARD = {  // reels 1-5: original calibrated weights (total 835)
-  H5: 10, H4: 30, H3: 40, H2: 60, H1: 70,
-  L5: 85, L4: 95, L3: 115, L2: 135, L1: 155,
-  W: 28, S: 12,
-};
-const BR0_WEIGHTS = [_BR0_ANCHOR, _BR0_STANDARD, _BR0_STANDARD, _BR0_STANDARD, _BR0_STANDARD, _BR0_STANDARD];
+// CLUSTER RULES:
+//   H1–H5 and L1–L5 are the only eligible cluster symbols.
+//   W never clusters — switch spins are responsible for W flooding the board.
+//   S never clusters — keeps S cells spread so multiple S per window stays low.
+//   W and S appear only in randomWeights; they are absent from every clusterWeights table.
+//
+// PER-REEL STRATEGY:
+//   Reel 0  — anchor reel, moderate clustering (25%), balanced H/L clusters.
+//             Standard W density (no backdoor-closing needed; reel1's H-bias limits L wins
+//             from W wildcard substitution).
+//   Reel 1  — H-biased (40% coverage). H ≈ 60% in random, 81% in clusters.
+//             Effective L density ≈ 28% vs 70% original → blocks most L-anchor runs.
+//   Reel 2  — L-biased opposite (40% coverage). H ≈ 14% in random, 26% in clusters.
+//             Blocks H runs that survived reel 1; keeps L wins reachable when they do
+//             clear reel 1.
+//   Reels 3–5 — standard weights, light clustering (20%). Provides depth for 4-6OAK wins
+//               on paylines that manage to align through reels 0–2.
+//
+// FULLSCREEN: All 30 cells showing the same symbol is theoretically achievable when all
+// 6 reels simultaneously land within a same-symbol cluster (extremely rare naturally).
+// Switch spins remain the primary vehicle for near-fullscreen states in practice.
 
-// Every non-S weight here is the original table x10 (e.g. H5 1->10) purely so S can be
-// tuned at one-tenth granularity - integer weights elsewhere would force S to round to a
-// whole multiple of a much coarser step.
+const _BR0_REEL0 = {
+  // Reduced L (480 vs 585) to cut L-anchor frequency. H stays standard (~25%).
+  randomWeights: { H5: 10, H4: 30, H3: 40, H2: 60, H1: 70, L5: 70, L4: 80, L3: 95, L2: 110, L1: 125, W: 28, S: 11 },
+  clusterProbability: 0.04,
+  clusterWeights:    { H5:  2, H4:  6, H3:  8, H2: 12, H1: 14, L5:  7, L4:  8, L3:  10, L2:  11, L1:  13 },
+  clusterMinLen: 5,
+  clusterMaxLen: 8,
+};
+
+const _BR0_REEL1 = {
+  // H-biased, 50% cluster coverage (p=0.13 ≈ 0.5/(6.5-0.5×5.5)).
+  // Blocks more L runs than 40% coverage; also reduces W-sub-L backdoor (W on reel0 +
+  // reel1=H-cluster → H-anchor win, not L).
+  randomWeights: { H5: 15, H4: 45, H3: 60, H2: 90, H1: 105, L5: 35, L4: 40, L3: 50, L2: 60, L1: 70, W: 28, S: 11 },
+  clusterProbability: 0.19,  // 60% H-cluster coverage: p = 0.6/(6.5-0.6×5.5) = 0.6/3.2 = 0.1875
+  clusterWeights:    { H5:  5, H4: 15, H3: 20, H2:  30, H1:  35, L5:  3, L4:  4, L3:   5, L2:   6, L1:   7 },
+  clusterMinLen: 5,
+  clusterMaxLen: 8,
+};
+
+const _BR0_REEL2 = {
+  // Strongly L-dominant (50% L-cluster coverage, H only 7% effective).
+  // Blocks H runs from reels 0+1: when reel2 lands in L-cluster, H line stops at reel2.
+  // clusterProbability 0.13 ≈ 50% coverage: p = 0.5/(6.5 - 0.5×5.5) = 0.5/3.75 = 0.133
+  randomWeights: { H5:  2, H4:  6, H3:  8, H2:  12, H1:  14, L5: 85, L4: 95, L3: 115, L2: 135, L1: 155, W: 28, S: 11 },
+  clusterProbability: 0.13,
+  clusterWeights:    { H5:  0, H4:  1, H3:  1, H2:   2, H1:   2, L5: 10, L4: 11, L3:  13, L2:  15, L1:  17 },
+  clusterMinLen: 5,
+  clusterMaxLen: 8,
+};
+
+const _BR0_REEL_STD = {
+  // Reels 3-5: standard weights, 20% clustering. Standard L depth allows 4-6OAK wins on
+  // paylines that successfully align through the blocking reels 1 and 2.
+  randomWeights: { H5: 10, H4: 30, H3: 40, H2:  60, H1:  70, L5: 85, L4: 95, L3: 115, L2: 135, L1: 155, W: 28, S: 11 },
+  clusterProbability: 0.04,
+  clusterWeights:    { H5:  2, H4:  6, H3:  8, H2:  12, H1:  14, L5:  9, L4: 10, L3:  12, L2:  14, L1:  16 },
+  clusterMinLen: 5,
+  clusterMaxLen: 8,
+};
+
+const BR0_WEIGHTS = [
+  _BR0_REEL0,
+  _BR0_REEL1,
+  _BR0_REEL2,
+  _BR0_REEL_STD,
+  _BR0_REEL_STD,
+  _BR0_REEL_STD,
+];
+
+// Free-spin strips are flat random (no clustering) — switch spins handle symbol flooding.
+// Non-S weights are x10 of the original table so S can be tuned at one-tenth granularity.
 const FR0_WEIGHTS = {
   H5: 10, H4: 10, H3: 20, H2: 30, H1: 40,
   L5: 90, L4: 100, L3: 110, L2: 120, L1: 130,
-  W: 33,  // raised from 17: reel0 HOLD eliminates ~13% basegame (switch×wild wins gone);
-          // W=33 compensates via freegame — confirmed 96.1% total at 10M rounds
-  S: 21,  // increased from 17: pushes upgrade rate ~11.6%→~20%, targeting S-trigger ~1/1200
+  W: 34,  // raised: cluster strips reduce basegame vs original; near wild-flood threshold
+           // where sensitivity jumps — verify with 5M sim
+  S: 21,
 };
 
 const FR1_WEIGHTS = {
   H5: 4, H4: 5, H3: 6, H2: 7, H1: 8,
   L5: 9, L4: 10, L3: 11, L2: 12, L1: 13,
-  W: 6,   // reduced from 9; S-mode natural W secondary to cumulative H5 pool wins
+  W: 6,
   S: 2,
 };
 
