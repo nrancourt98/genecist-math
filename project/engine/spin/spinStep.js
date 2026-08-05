@@ -290,4 +290,31 @@ function randomPaddingPositions(rng, reelStrip) {
   return Array.from({ length: numReels }, () => rng.randInt(reelStrip.length));
 }
 
-module.exports = { resolveOneSpin };
+/**
+ * Runs a complete round from initial state through to finalWin, accumulating all events
+ * and the total win delta. Loops resolveOneSpin until isRoundFinal so freespins, retriggers,
+ * switch sequences, upgrades, and wincaps are all resolved before returning. The caller
+ * receives a single flat event stream and one total winDeltaCenti — no mid-round state is
+ * exposed and no resumption is possible (or needed).
+ *
+ * @param {object} roundState - initial state from createInitialRoundState (or a resumed state)
+ * @param {import("../rng/rngInterface")} rng
+ * @param {(reelName: string) => string[][]} [reelProvider]
+ * @returns {{ events: object[], winDeltaCenti: number, roundState: object }}
+ */
+function resolveFullRound(roundState, rng, reelProvider = getReel) {
+  const allEvents = [];
+  let totalWinCenti = 0;
+  let currentState = roundState;
+  for (let step = 0; step < 5000; step++) {
+    const { events, roundState: next, winDeltaCenti, isRoundFinal } =
+      resolveOneSpin(currentState, rng, reelProvider);
+    allEvents.push(...events);
+    totalWinCenti += winDeltaCenti;
+    currentState = next;
+    if (isRoundFinal) return { events: allEvents, winDeltaCenti: totalWinCenti, roundState: next };
+  }
+  throw new Error("resolveFullRound: round did not finish in 5000 steps");
+}
+
+module.exports = { resolveOneSpin, resolveFullRound };

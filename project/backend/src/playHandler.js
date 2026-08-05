@@ -1,10 +1,11 @@
-// The `play` JSON-RPC method - see docs/bgaming-compliance.md "The play contract" and
-// docs/architecture.md "The step-function". One call resolves exactly one
-// spin-equivalent of work via the engine's resolveOneSpin; round state round-trips
-// through the opaque `round` param so a bonus feature can resume across stateless calls.
+// The `play` JSON-RPC method. One call resolves a complete round — base spin plus all
+// resulting freespins (retriggers, switch sequences, upgrades, wincap) — and always
+// returns final:true with round:{} so Runner never needs to poll for bonus steps.
+// All events from every internal spin are concatenated in chronological order;
+// finance.win_change is the total round win across base and freegame.
 
 const {
-  resolveOneSpin,
+  resolveFullRound,
   createInitialRoundState,
   isFreshRound,
   BET_MODE_COST_MULTIPLIER,
@@ -41,7 +42,7 @@ async function handlePlay(params) {
 
   const rng = maybeCreateGodRng(god_data) || (await createRemoteRng());
 
-  const { events, roundState: nextRoundState, winDeltaCenti, isRoundFinal } = resolveOneSpin(roundState, rng);
+  const { events, winDeltaCenti } = resolveFullRound(roundState, rng);
 
   const winChangeCents = centiMultiplierToCents(winDeltaCenti, roundState.betAmountCents);
   const costMultiplier = BET_MODE_COST_MULTIPLIER[roundState.betMode];
@@ -55,24 +56,12 @@ async function handlePlay(params) {
     },
   ];
 
-  const rs = nextRoundState;
-  const resumeState = {
-    phase:                rs.phase,
-    mode:                 rs.freeSpin?.mode         ?? null,
-    freeSpinsUsed:        rs.freeSpin?.fs            ?? null,
-    totalFreeSpins:       rs.freeSpin?.totFs        ?? null,
-    switchSymbols:        rs.switch.symbols,
-    switchWild:           rs.switch.wild,
-    switchSpinsRemaining: rs.switch.spins,
-    freegameWinCents:     centiMultiplierToCents(rs.freegameWinsCenti, rs.betAmountCents),
-  };
-
   return {
-    round: isRoundFinal ? {} : nextRoundState,
+    round: {},
     game: game || {},
     finance,
-    resp: { events, bet: roundState.betAmountCents, resumeState },
-    final: isRoundFinal,
+    resp: { events, bet: roundState.betAmountCents },
+    final: true,
   };
 }
 

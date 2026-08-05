@@ -2,7 +2,7 @@
 // need to reach into. Everything else under engine/ is an internal implementation detail
 // reachable by relative path (mainly for tests), but not part of the supported surface.
 
-const { resolveOneSpin } = require("./spin/spinStep");
+const { resolveOneSpin, resolveFullRound } = require("./spin/spinStep");
 const {
   createInitialRoundState,
   isFreshRound,
@@ -15,6 +15,7 @@ const { createLocalPrng } = require("./rng/localPrng");
 
 module.exports = {
   resolveOneSpin,
+  resolveFullRound,
   createInitialRoundState,
   isFreshRound,
   BET_MODE_COST_MULTIPLIER,

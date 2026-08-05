@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 // Minimal stand-in for BGaming's real Runner, for manual smoke-testing the backend
-// without it (the designer has the real `runner_cli` but only a Linux build so far - see
-// docs/bgaming-compliance.md). Drives one or more rounds against a live `play` endpoint,
-// carrying `round`/`game` forward exactly like the real Runner would, and prints a
-// concise per-step summary. Not a test runner - just a convenience wrapper around an
-// already-working backend (see docs/architecture.md's Build Sequence).
+// without it. Drives one or more rounds against a live `play` endpoint. The backend now
+// resolves a complete round (base spin + all freespins) in a single HTTP call and always
+// returns final:true, so each round is always exactly one step. The while-loop below is
+// kept for safety but will always exit after the first iteration.
 //
 // Usage:
 //   node devtools/mockRunner.js [--url http://127.0.0.1:4051/api] [--bet 100]
@@ -106,7 +105,7 @@ async function playOneRound(args, roundIndex) {
     const params = {
       round,
       game,
-      req: step === 0 ? req : { bet: args.bet, bet_type: "bet" },
+      req,
       config: { rtp: null, purchased_features: ["buy_bonus", "buy_super"], gamble_limit: null },
       god_data: args.god === "random" ? { random: randomUint32() } : godData,
     };

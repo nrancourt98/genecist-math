@@ -140,38 +140,36 @@ for (const [feature, costMultiplier] of [
         purchased_feature: feature,
       });
       assert.equal(firstResult.finance[0].bet, -100 * costMultiplier);
-      assert.ok(steps >= 11, `expected at least 11 steps (1 synthetic trigger + 10 free spins), got ${steps}`);
+      assert.equal(steps, 1, "round must complete in a single HTTP call");
       assert.deepEqual(finalRound, {});
 
-      // Event-content assertions across the real HTTP/JSON boundary (not just finance
-      // and round-shape, which the assertions above already covered) - this is the gap
-      // this whole batch of tests is closing, see the conversation that asked for it.
+      // Event-content assertions across the real HTTP/JSON boundary. The engine now
+      // resolves the complete round (synthetic triggering board + all freespins) in one
+      // HTTP call, so all events arrive in a single concatenated stream.
       //
-      // First step: a synthetic "triggering" board, shown before the feature itself
-      // starts (see docs/architecture.md's judgment-call log, "buy-feature triggering
-      // board") - its incidental line wins are honoured exactly like a natural trigger
-      // spin's are, so the exact event list isn't asserted here (setTotalWin always
-      // appears; winInfo/setWin only if this particular forced board happens to also
-      // land a win - see spinStep.test.js's dedicated, fully-controlled test for that).
+      // The triggering board (see docs/architecture.md's judgment-call log,
+      // "buy-feature triggering board") produces the first reveal and freeSpinTrigger.
+      // Its incidental line wins are honoured - setTotalWin always appears; winInfo/setWin
+      // only if the forced board also lands a win (see spinStep.test.js for a controlled
+      // test of that). selectedMode follows immediately as the feature begins.
       const firstStepTypes = firstResult.resp.events.map((e) => e.type);
       assert.equal(firstStepTypes[0], "reveal");
-      assert.equal(firstStepTypes[firstStepTypes.length - 1], "freeSpinTrigger");
+      assert.ok(firstStepTypes.includes("freeSpinTrigger"), `events must include freeSpinTrigger; got: [${firstStepTypes}]`);
       assert.ok(firstStepTypes.includes("setTotalWin"));
       const trigger = firstResult.resp.events.find((e) => e.type === "freeSpinTrigger");
       assert.equal(trigger.totalFs, 10);
       assert.equal(trigger.positions.length, feature === "buy_bonus" ? 3 : 4);
 
-      // Second step: the feature itself actually begins, announcing its mode.
-      const secondStepTypes = allSteps[1].resp.events.map((e) => e.type);
-      assert.ok(secondStepTypes.includes("selectedMode"), "second step must announce the entry mode");
-      const selectedMode = allSteps[1].resp.events.find((e) => e.type === "selectedMode");
+      // selectedMode fires as the feature begins (immediately after freeSpinTrigger in the stream).
+      assert.ok(firstStepTypes.includes("selectedMode"), "events must include selectedMode announcing the entry mode");
+      const selectedMode = firstResult.resp.events.find((e) => e.type === "selectedMode");
       assert.equal(selectedMode.mode, feature === "buy_bonus" ? "R" : "S");
 
       const lastStepTypes = allSteps[allSteps.length - 1].resp.events.map((e) => e.type);
       assert.deepEqual(
         lastStepTypes.slice(-2),
         ["freeSpinEnd", "finalWin"],
-        "the final step must end with freeSpinEnd immediately followed by finalWin"
+        "the collapsed round must end with freeSpinEnd immediately followed by finalWin"
       );
     } finally {
       server.close();
