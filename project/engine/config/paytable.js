@@ -6,8 +6,8 @@
 // so the rest of the engine never does runtime float multiplication.
 
 const PAYTABLE_DECIMAL = {
-  W: { 6: 50 }, // wild pays only on 6-of-a-kind; no 3/4/5-kind entry exists
-  H5: { 3: 5, 4: 10, 5: 20, 6: 40 },
+  W: { 6: 30 }, // wild pays only on 6-of-a-kind; no 3/4/5-kind entry exists
+  H5: { 3: 5, 4: 10, 5: 20, 6: 30 },
   H4: { 3: 2, 4: 5, 5: 12.5, 6: 25 },
   H3: { 3: 1.5, 4: 4, 5: 10, 6: 20 },
   H2: { 3: 1, 4: 2.5, 5: 7.5, 6: 15 },

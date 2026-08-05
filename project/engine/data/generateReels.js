@@ -25,14 +25,22 @@ function buildWeightedPool(weights) {
   return pool;
 }
 
-/** @returns {string[][]} STRIP_ROWS rows x NUM_REELS columns, each cell sampled independently from the weight table */
+/**
+ * @param {object|object[]} weights - either a single {symbol:weight} object (all reels share
+ *   one pool) or an array of NUM_REELS {symbol:weight} objects (per-reel pools). The
+ *   per-reel form lets left reels be tuned independently of right reels - useful for
+ *   controlling 3OAK frequency since paylines always start from reel 0.
+ * @returns {string[][]} STRIP_ROWS rows x NUM_REELS columns
+ */
 function generateStrip(weights, rng) {
-  const pool = buildWeightedPool(weights);
+  const pools = Array.isArray(weights)
+    ? weights.map(buildWeightedPool)
+    : Array.from({ length: NUM_REELS }, () => buildWeightedPool(weights));
   const rows = [];
   for (let row = 0; row < STRIP_ROWS; row++) {
     const cells = [];
     for (let reel = 0; reel < NUM_REELS; reel++) {
-      cells.push(pool[rng.randInt(pool.length)]);
+      cells.push(pools[reel][rng.randInt(pools[reel].length)]);
     }
     rows.push(cells);
   }

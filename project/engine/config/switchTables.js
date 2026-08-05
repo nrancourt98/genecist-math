@@ -5,7 +5,7 @@
 // Spins-to-award per drop, base game and R-mode (regular free spins) share this bag.
 // Shortened from the Python original (which averaged ~4 spins) to target ~1.5 avg — the
 // designer wants more frequent but shorter sequences rather than rare long ones.
-const SPINS_AWARD_BAG_BASE_AND_R = [1, 1, 1, 2, 2, 2]; // mean exactly 1.5
+const SPINS_AWARD_BAG_BASE_AND_R = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]; // mean 2.0; 1=40%, 2=30%, 3=20%, 4=10%
 
 // S-mode (super free spins) uses a slightly different, lower-skewed bag.
 // gamestate.py run_super_freespin:313, upgrade_super_freespin:408.
@@ -57,7 +57,7 @@ const BLOCKS_AT_SYMBOL_CAP = { base: true, R: false, S: true };
 // but always creates H5 stacks rather than wild floods — this is what allows ~96% total RTP
 // at high trigger frequency. Set R/S to a positive integer (e.g. 10 = 10%) to add occasional
 // wild-mode sequences back, but compensate by lowering FR0/FR1 W by ~1-2 units each.
-const WILD_CHANCE_ONE_IN = { base: 2, R: 0, S: 0 };
+const WILD_CHANCE_ONE_IN = { base: 3, R: 0, S: 0 };
 
 // Weighted selection for switch-target symbols: higher weight = more likely to be chosen.
 // Biased toward H symbols (rare on board: 0.8–1.8 expected cells per spin) vs L symbols
