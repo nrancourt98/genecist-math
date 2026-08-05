@@ -19,10 +19,11 @@ const RNG_URL = process.env.RNG_URL || "http://localhost:4002/api";
 // Headroom for a complete round resolved in one HTTP call (resolveFullRound). A standard
 // no-retrigger freespin round draws roughly: 1 base spin (~13) + 10 freespins × ~16 each
 // (board×6, wild-multiplier rolls, drop check, padding×6) = ~173 total. Retriggers (+4
-// spins each), switch sequences inside freespins, and upgrade to S-mode all add more.
-// 1024 covers any realistic sequence with room to spare. nextUint32() throws loudly if
-// this is ever exceeded so it won't silently wrap.
-const DEFAULT_BATCH_SIZE = 1024;
+// spins each) and switch sequences inside freespins add more. 400 covers any realistic
+// round. The RNG service caps individual requests at 200, so createRemoteRng fetches in
+// multiple calls and concatenates. nextUint32() throws loudly if exhausted mid-round.
+const RNG_MAX_BATCH = 200;
+const DEFAULT_BATCH_SIZE = 400;
 
 async function fetchRandomBatch(qty) {
   const response = await fetch(RNG_URL, {
@@ -48,14 +49,20 @@ async function fetchRandomBatch(qty) {
  *   RngInterface backed by a prefetched buffer of RNG-service-sourced numbers.
  */
 async function createRemoteRng(qty = DEFAULT_BATCH_SIZE) {
-  const buffer = await fetchRandomBatch(qty);
+  const chunks = [];
+  let remaining = qty;
+  while (remaining > 0) {
+    const batchSize = Math.min(remaining, RNG_MAX_BATCH);
+    chunks.push(...(await fetchRandomBatch(batchSize)));
+    remaining -= batchSize;
+  }
   let cursor = 0;
 
   function nextUint32() {
-    if (cursor >= buffer.length) {
-      throw new Error("rngClient: prefetched RNG buffer exhausted mid-spin - increase DEFAULT_BATCH_SIZE");
+    if (cursor >= chunks.length) {
+      throw new Error("rngClient: prefetched RNG buffer exhausted mid-round - increase DEFAULT_BATCH_SIZE");
     }
-    return buffer[cursor++];
+    return chunks[cursor++];
   }
 
   return createRngFromUint32Source(nextUint32);
