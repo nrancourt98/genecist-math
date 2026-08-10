@@ -40,7 +40,11 @@ async function handlePlay(params) {
   const betAmountCents = Math.trunc(Number(req.bet));
   const roundState = fresh ? createInitialRoundState(resolveBetMode(req), betAmountCents) : round;
 
-  const rng = maybeCreateGodRng(god_data) || (await createRemoteRng());
+  // Bonus/super modes always run a full FS session and draw more RNG values than a base
+  // spin (switch sequences at 10%/spin, retriggerers, S-mode long bags). 800 = 4 × 200
+  // batches; base gets 600 = 3 × 200 for safety on the rare FS-triggering base round.
+  const isBonusMode = roundState.betMode === "bonus" || roundState.betMode === "super";
+  const rng = maybeCreateGodRng(god_data) || (await createRemoteRng(isBonusMode ? 800 : 600));
 
   const { events, winDeltaCenti } = resolveFullRound(roundState, rng);
 

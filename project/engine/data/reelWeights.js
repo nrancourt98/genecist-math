@@ -93,11 +93,13 @@ const BR0_WEIGHTS = [
 // Free-spin strips are flat random (no clustering) — switch spins handle symbol flooding.
 // Non-S weights are x10 of the original table so S can be tuned at one-tenth granularity.
 const FR0_WEIGHTS = {
-  H5: 10, H4: 10, H3: 20, H2: 30, H1: 40,
+  // H reduced ~37% vs original: fewer H cells on board means each switch trigger
+  // converts fewer cells, cutting per-trigger cost so 10%/spin trigger rate stays
+  // near target RTP. H5 reduced too (natural wins); H1-H4 are switch targets.
+  H5: 6, H4: 6, H3: 13, H2: 19, H1: 25,
   L5: 90, L4: 100, L3: 110, L2: 120, L1: 130,
-  W: 34,  // raised: cluster strips reduce basegame vs original; near wild-flood threshold
-           // where sensitivity jumps — verify with 5M sim
-  S: 21,
+  W: 31,
+  S: 18,  // raised from 15: restores upgrade rate (R→S) toward 10-15% target
 };
 
 const FR1_WEIGHTS = {

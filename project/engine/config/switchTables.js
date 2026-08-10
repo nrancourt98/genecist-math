@@ -2,10 +2,12 @@
 // arrays (not pre-collapsed to probabilities) so they stay diffable against the Python
 // source by eye. See docs/game-design-spec.md "Switch Spins feature".
 
-// Spins-to-award per drop, base game and R-mode (regular free spins) share this bag.
-// Shortened from the Python original (which averaged ~4 spins) to target ~1.5 avg — the
-// designer wants more frequent but shorter sequences rather than rare long ones.
+// Base game spin bag — longer sequences feel exciting in base since triggers are rarer.
 const SPINS_AWARD_BAG_BASE_AND_R = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]; // mean 2.0; 1=40%, 2=30%, 3=20%, 4=10%
+
+// R-mode freespin bag — mostly 1 spin so high trigger frequency (10%/spin) doesn't
+// compound into massive board conversions. 2 spins is a rare treat; 3 is very rare.
+const SPINS_AWARD_BAG_R = [1, 1, 1, 1, 1, 1, 1, 1, 2, 3]; // mean 1.4; 1=80%, 2=10%, 3=10%
 
 // S-mode (super free spins) uses a slightly different, lower-skewed bag.
 // gamestate.py run_super_freespin:313, upgrade_super_freespin:408.
@@ -36,7 +38,7 @@ const SYMBOL_COUNT_BAG = [
 //   accounted for 93% of total win). RESTACK is kept far rarer than INITIAL specifically
 //   to keep that compounding tail negligible while still allowing it in principle, since
 //   the designer wants stacking preserved as a mechanic, not removed.
-const INITIAL_DROP_CHANCE_ONE_IN = { base: 31, R: 25, S: 25 }; // R/S: 1-in-25 per spin → ~37% guarantee per 12-spin session
+const INITIAL_DROP_CHANCE_ONE_IN = { base: 20, R: 10, S: 10 }; // base: 5%/spin; R/S: 10%/spin → ~65% guarantee per 12-spin FS session
 const RESTACK_DROP_CHANCE_ONE_IN = { base: 4000, R: 2500, S: 3000 };
 
 // Base game and S-mode both block further SW drops once switch_symbols reaches 9 unique
@@ -72,6 +74,7 @@ const SWITCH_SOURCE_WEIGHTS = {
 
 module.exports = {
   SPINS_AWARD_BAG_BASE_AND_R,
+  SPINS_AWARD_BAG_R,
   SPINS_AWARD_BAG_S,
   SYMBOL_COUNT_BAG,
   INITIAL_DROP_CHANCE_ONE_IN,

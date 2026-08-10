@@ -1,6 +1,7 @@
 const { SWITCH_SOURCE_POOL, HIGHEST_SYMBOL, WILD } = require("../config/symbols");
 const {
   SPINS_AWARD_BAG_BASE_AND_R,
+  SPINS_AWARD_BAG_R,
   SPINS_AWARD_BAG_S,
   SYMBOL_COUNT_BAG,
   INITIAL_DROP_CHANCE_ONE_IN,
@@ -101,7 +102,7 @@ function resolveSwitchAward(switchState, gameMode, rng) {
     switchState.wild = wildChanceOneIn > 0 && rng.randInt(wildChanceOneIn) === 0;
   }
 
-  const spinsBag = gameMode === "S" ? SPINS_AWARD_BAG_S : SPINS_AWARD_BAG_BASE_AND_R;
+  const spinsBag = gameMode === "S" ? SPINS_AWARD_BAG_S : gameMode === "R" ? SPINS_AWARD_BAG_R : SPINS_AWARD_BAG_BASE_AND_R;
   const spinsAwarded = rng.pickFromBag(spinsBag);
 
   let numToAdd = rng.pickFromBag(SYMBOL_COUNT_BAG);

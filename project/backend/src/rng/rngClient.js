@@ -16,14 +16,15 @@ const { createRngFromUint32Source } = require("../../../engine");
 
 const RNG_URL = process.env.RNG_URL || "http://localhost:4002/api";
 
-// Headroom for a complete round resolved in one HTTP call (resolveFullRound). A standard
-// no-retrigger freespin round draws roughly: 1 base spin (~13) + 10 freespins × ~16 each
-// (board×6, wild-multiplier rolls, drop check, padding×6) = ~173 total. Retriggers (+4
-// spins each) and switch sequences inside freespins add more. 400 covers any realistic
-// round. The RNG service caps individual requests at 200, so createRemoteRng fetches in
-// multiple calls and concatenates. nextUint32() throws loudly if exhausted mid-round.
+// Headroom for a complete round resolved in one HTTP call (resolveFullRound). A base spin
+// draws ~16 values; a full FS session adds ~17/spin (board + switch drop check) × avg 16
+// spins + ~28/sequence × avg 1.6 switch sequences ≈ 317 typical, 500+ on heavy retrigger
+// runs. playHandler.js passes 600 for base rounds and 800 for bonus/super modes (which
+// always run a full FS session from the start). The RNG service caps individual requests
+// at 200, so createRemoteRng fetches in multiple calls and concatenates. nextUint32()
+// throws loudly if exhausted mid-round — increase the qty passed by playHandler.js.
 const RNG_MAX_BATCH = 200;
-const DEFAULT_BATCH_SIZE = 400;
+const DEFAULT_BATCH_SIZE = 600;
 
 async function fetchRandomBatch(qty) {
   const response = await fetch(RNG_URL, {
