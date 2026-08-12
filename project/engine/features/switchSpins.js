@@ -2,6 +2,7 @@ const { SWITCH_SOURCE_POOL, HIGHEST_SYMBOL, WILD } = require("../config/symbols"
 const {
   SPINS_AWARD_BAG_BASE_AND_R,
   SPINS_AWARD_BAG_R,
+  SPINS_AWARD_BAG_R_BUY,
   SPINS_AWARD_BAG_S,
   SYMBOL_COUNT_BAG,
   INITIAL_DROP_CHANCE_ONE_IN,
@@ -84,9 +85,10 @@ function maybeDropSwitch(switchState, gameMode, rng) {
  * @param {{spins: number, symbols: string[], wild: boolean|null}} switchState
  * @param {"base"|"R"|"S"} gameMode
  * @param {import("../rng/rngInterface")} rng
+ * @param {boolean} [isBuy=false] - true for bonus/super buy sessions; uses buy-specific spin bag
  * @returns {{spinsAwarded: number, wild: boolean, symbols: string[], totalSpins: number}}
  */
-function resolveSwitchAward(switchState, gameMode, rng) {
+function resolveSwitchAward(switchState, gameMode, rng, isBuy = false) {
   // In S-mode the wild/H5 substitution target is locked on the first drop and stays
   // fixed for the entire session as the pool accumulates. Re-rolling it mid-session
   // would silently flip all accumulated symbols to a different target, which would be
@@ -102,7 +104,10 @@ function resolveSwitchAward(switchState, gameMode, rng) {
     switchState.wild = wildChanceOneIn > 0 && rng.randInt(wildChanceOneIn) === 0;
   }
 
-  const spinsBag = gameMode === "S" ? SPINS_AWARD_BAG_S : gameMode === "R" ? SPINS_AWARD_BAG_R : SPINS_AWARD_BAG_BASE_AND_R;
+  const spinsBag =
+    gameMode === "S" ? SPINS_AWARD_BAG_S :
+    gameMode === "R" ? (isBuy ? SPINS_AWARD_BAG_R_BUY : SPINS_AWARD_BAG_R) :
+    SPINS_AWARD_BAG_BASE_AND_R;
   const spinsAwarded = rng.pickFromBag(spinsBag);
 
   let numToAdd = rng.pickFromBag(SYMBOL_COUNT_BAG);

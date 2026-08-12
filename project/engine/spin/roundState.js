@@ -50,10 +50,10 @@ function createInitialRoundState(betMode, betAmountCents) {
   // synthesize.
   if (betMode === "bonus") {
     roundState.phase = "buyTrigger";
-    roundState.freeSpin = createInitialFreeSpinState("R");
+    roundState.freeSpin = createInitialFreeSpinState("R", true);
   } else if (betMode === "super") {
     roundState.phase = "buyTrigger";
-    roundState.freeSpin = createInitialFreeSpinState("S");
+    roundState.freeSpin = createInitialFreeSpinState("S", true);
   }
 
   return roundState;

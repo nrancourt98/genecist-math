@@ -111,7 +111,7 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
   evaluateAndRecordWin(state, board, "basegameWinsCenti", out);
 
   if (dropPosition) {
-    const award = resolveSwitchAward(state.switch, gameMode, rng);
+    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super");
     out.push(events.newSwitchEvent(award.spinsAwarded, award.wild, award.symbols));
     out.push(events.newSwitchSpinsEvent(award.totalSpins));
   }
@@ -218,7 +218,7 @@ function resolveFreeSpinStep(state, rng, out, reelProvider) {
   evaluateAndRecordWin(state, board, "freegameWinsCenti", out);
 
   if (dropPosition) {
-    const award = resolveSwitchAward(state.switch, gameMode, rng);
+    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super");
     out.push(events.newSwitchEvent(award.spinsAwarded, award.wild, award.symbols));
     out.push(events.newSwitchSpinsEvent(award.totalSpins));
   }
@@ -245,7 +245,7 @@ function resolveFreeSpinStep(state, rng, out, reelProvider) {
       // upgrade_super_freespin resets switch_spins/switch_symbols/switch_wild) - this
       // differs from a same-tier retrigger, which does not reset switch state.
       state.switch = createInitialSwitchState();
-      state.freeSpin = createInitialFreeSpinState("S");
+      state.freeSpin = createInitialFreeSpinState("S", state.betMode === "bonus" || state.betMode === "super");
     } else if (continuation && continuation.type === "retrigger") {
       freeSpin.totFs += continuation.fsAdded;
       out.push(events.freeSpinRetriggerEvent(continuation.fsAdded, freeSpin.totFs, continuation.positions));

@@ -9,10 +9,17 @@ const SPINS_AWARD_BAG_BASE_AND_R = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]; // mean 2.0; 
 // compound into massive board conversions. 2 spins is a rare treat; 3 is very rare.
 const SPINS_AWARD_BAG_R = [1, 1, 1, 1, 1, 1, 1, 1, 2, 3]; // mean 1.4; 1=80%, 2=10%, 3=10%
 
+// R-mode bag for bonus BUY sessions only. Richer than the natural-FS R bag (mean 1.4)
+// to deliver ~96% RTP at 100x cost. Max capped at 6 (vs S-mode's 10) since R-mode
+// sequences convert fewer symbols per spin — a 6-spin sequence still feels substantial.
+const SPINS_AWARD_BAG_R_BUY = [1, 1, 2, 2, 3, 4, 4, 5, 6, 8]; // mean 3.6; max 8
+
 // S-mode (super free spins) uses a slightly different, lower-skewed bag.
 // gamestate.py run_super_freespin:313, upgrade_super_freespin:408.
+// Extended with 3 extra 1s to lower the mean (2.91 vs original 3.10) while keeping max=10.
+// 1-spin: 41%, 2-spin: 19%, 3-spin: 16%, 4-spin: 6%, 5–10: rare; 10-spin jackpot preserved.
 const SPINS_AWARD_BAG_S = [
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10,
 ];
 
 // Count of NEW switch-target symbols to add per drop, shared across all modes.
@@ -38,7 +45,7 @@ const SYMBOL_COUNT_BAG = [
 //   accounted for 93% of total win). RESTACK is kept far rarer than INITIAL specifically
 //   to keep that compounding tail negligible while still allowing it in principle, since
 //   the designer wants stacking preserved as a mechanic, not removed.
-const INITIAL_DROP_CHANCE_ONE_IN = { base: 20, R: 10, S: 10 }; // base: 5%/spin; R/S: 10%/spin → ~65% guarantee per 12-spin FS session
+const INITIAL_DROP_CHANCE_ONE_IN = { base: 31, R: 14, S: 14 }; // base: 3.2%/spin; R/S: 7.1%/spin → ~52% in 10 spins, ~70% over avg 18-spin session
 const RESTACK_DROP_CHANCE_ONE_IN = { base: 4000, R: 2500, S: 3000 };
 
 // Base game and S-mode both block further SW drops once switch_symbols reaches 9 unique
@@ -75,6 +82,7 @@ const SWITCH_SOURCE_WEIGHTS = {
 module.exports = {
   SPINS_AWARD_BAG_BASE_AND_R,
   SPINS_AWARD_BAG_R,
+  SPINS_AWARD_BAG_R_BUY,
   SPINS_AWARD_BAG_S,
   SYMBOL_COUNT_BAG,
   INITIAL_DROP_CHANCE_ONE_IN,

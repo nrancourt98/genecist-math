@@ -9,7 +9,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createLocalPrng } = require("../rng/localPrng");
 const { convertOne } = require("./convertReels");
-const { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS } = require("./reelWeights");
+const { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS, FR0_BUY_WEIGHTS, FR1_BUY_WEIGHTS } = require("./reelWeights");
 
 const REELS_DIR = path.join(__dirname, "reels");
 const NUM_REELS = 6;
@@ -116,6 +116,9 @@ if (require.main === module) {
   generateAndConvert("BR0", BR0_WEIGHTS, createLocalPrng(20260619));
   generateAndConvert("FR0", FR0_WEIGHTS, createLocalPrng(20261001));
   generateAndConvert("FR1", FR1_WEIGHTS, createLocalPrng(20261002));
+  // FR0_BUY/FR1_BUY use dedicated seeds so buy strips can be regenerated independently.
+  generateAndConvert("FR0_BUY", FR0_BUY_WEIGHTS, createLocalPrng(20261003));
+  generateAndConvert("FR1_BUY", FR1_BUY_WEIGHTS, createLocalPrng(20261004));
 }
 
 module.exports = { generateStrip, generateClusteredStrip, generateAndConvert };

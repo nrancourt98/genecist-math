@@ -93,13 +93,12 @@ const BR0_WEIGHTS = [
 // Free-spin strips are flat random (no clustering) — switch spins handle symbol flooding.
 // Non-S weights are x10 of the original table so S can be tuned at one-tenth granularity.
 const FR0_WEIGHTS = {
-  // H reduced ~37% vs original: fewer H cells on board means each switch trigger
-  // converts fewer cells, cutting per-trigger cost so 10%/spin trigger rate stays
-  // near target RTP. H5 reduced too (natural wins); H1-H4 are switch targets.
-  H5: 6, H4: 6, H3: 13, H2: 19, H1: 25,
+  // H reduced ~50% vs original: fewer switch-target cells = lower per-trigger win.
+  // W cut from 31→10: natural wilds drive a disproportionate share of FS RTP.
+  H5: 4, H4: 4, H3: 9, H2: 13, H1: 17,
   L5: 90, L4: 100, L3: 110, L2: 120, L1: 130,
-  W: 31,
-  S: 18,  // raised from 15: restores upgrade rate (R→S) toward 10-15% target
+  W: 10,
+  S: 18,
 };
 
 const FR1_WEIGHTS = {
@@ -109,4 +108,28 @@ const FR1_WEIGHTS = {
   S: 2,
 };
 
-module.exports = { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS };
+// Buy-mode strips — decoupled from FR0/FR1 so bonus/super buy RTP can be calibrated
+// independently of naturally-triggered FS sessions.
+
+// FR0_BUY: bonus buy (R-mode FS). H and W boosted vs FR0 to push bonus buy toward
+// 96% RTP at 100x cost. Natural FS (FR0) is untouched.
+// H: 47->79 (+68%), W: 10->28 (+180%) to increase switch win and natural W lines.
+const FR0_BUY_WEIGHTS = {
+  H5: 7, H4: 8, H3: 15, H2: 22, H1: 27,
+  L5: 90, L4: 100, L3: 110, L2: 120, L1: 130,
+  W: 28,
+  S: 18,
+};
+
+// FR1_BUY: super buy (S-mode FS). H reduced 30->20 while L increases by 10 to keep
+// total pool = 93 (same as FR1). S and W absolute counts unchanged so retrigger rate
+// and natural W wins stay the same; only H density drops (32%->21.5%).
+// Target: ~96% RTP at 300x cost.
+const FR1_BUY_WEIGHTS = {
+  H5: 3, H4: 4, H3: 4, H2: 4, H1: 5,
+  L5: 12, L4: 13, L3: 14, L2: 13, L1: 13,
+  W: 6,
+  S: 2,
+};
+
+module.exports = { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS, FR0_BUY_WEIGHTS, FR1_BUY_WEIGHTS };

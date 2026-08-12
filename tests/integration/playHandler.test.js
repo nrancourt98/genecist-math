@@ -140,18 +140,16 @@ for (const [feature, costMultiplier] of [
         purchased_feature: feature,
       });
       assert.equal(firstResult.finance[0].bet, -100 * costMultiplier);
-      assert.equal(steps, 1, "round must complete in a single HTTP call");
+      // Two steps: step 1 computes and delivers all events (final: false), step 2 is the
+      // frontend's confirm call that closes the round (final: true, events: []).
+      assert.equal(steps, 2, "round must complete in exactly two HTTP calls (compute + confirm)");
+      assert.equal(firstResult.final, false, "step 1 must be awaiting confirm");
+      assert.equal(firstResult.round.awaiting_confirm, true);
       assert.deepEqual(finalRound, {});
 
-      // Event-content assertions across the real HTTP/JSON boundary. The engine now
-      // resolves the complete round (synthetic triggering board + all freespins) in one
-      // HTTP call, so all events arrive in a single concatenated stream.
-      //
-      // The triggering board (see docs/architecture.md's judgment-call log,
-      // "buy-feature triggering board") produces the first reveal and freeSpinTrigger.
-      // Its incidental line wins are honoured - setTotalWin always appears; winInfo/setWin
-      // only if the forced board also lands a win (see spinStep.test.js for a controlled
-      // test of that). selectedMode follows immediately as the feature begins.
+      // All events are delivered in step 1. The triggering board produces the first reveal
+      // and freeSpinTrigger. setTotalWin always appears; winInfo/setWin only if the forced
+      // board also lands a win. selectedMode follows immediately as the feature begins.
       const firstStepTypes = firstResult.resp.events.map((e) => e.type);
       assert.equal(firstStepTypes[0], "reveal");
       assert.ok(firstStepTypes.includes("freeSpinTrigger"), `events must include freeSpinTrigger; got: [${firstStepTypes}]`);
@@ -165,12 +163,18 @@ for (const [feature, costMultiplier] of [
       const selectedMode = firstResult.resp.events.find((e) => e.type === "selectedMode");
       assert.equal(selectedMode.mode, feature === "buy_bonus" ? "R" : "S");
 
-      const lastStepTypes = allSteps[allSteps.length - 1].resp.events.map((e) => e.type);
+      // freeSpinEnd + finalWin close the event stream in step 1 (not the confirm step).
       assert.deepEqual(
-        lastStepTypes.slice(-2),
+        firstStepTypes.slice(-2),
         ["freeSpinEnd", "finalWin"],
         "the collapsed round must end with freeSpinEnd immediately followed by finalWin"
       );
+
+      // Confirm step (step 2) carries no events and closes the round.
+      const confirmStep = allSteps[1];
+      assert.equal(confirmStep.resp.events.length, 0, "confirm step must return no events");
+      assert.equal(confirmStep.final, true);
+      assert.deepEqual(confirmStep.round, {});
     } finally {
       server.close();
     }
@@ -219,34 +223,47 @@ test("a switch-spin drop on base mode's first spin emits newSwitch + newSwitchSp
   }
 });
 
-test("a natural 3+ scatter landing in base mode triggers classic Free Spins, then selectedMode fires on the very next step", async () => {
+test("a natural 3+ scatter landing in base mode triggers classic Free Spins; freeSpinTrigger and selectedMode both appear in the step-1 event stream", async () => {
   const server = await startServer();
   const baseUrl = `http://127.0.0.1:${server.address().port}`;
   try {
     // BR0's actual committed strip data (scanned directly, see the conversation that
     // built this test) happens to land a visible "S" on reels 0/1/2 at these specific
-    // start-rows; reels 3-5 are pinned to strip row 0 (whatever symbol that happens to
-    // be is irrelevant - the trigger only needs >=3 "S" anywhere on the board). This is
-    // intentionally coupled to BR0's current content, not derived from game rules - if
-    // BR0 is ever regenerated (see engine/data/reelWeights.js), re-scan for fresh
-    // candidate rows rather than guessing new ones.
+    // start-rows; reels 3-5 are pinned to strip row 0 (irrelevant - trigger needs >=3 S).
+    // This is intentionally coupled to BR0's current content - if BR0 is ever regenerated
+    // (see engine/data/reelWeights.js), re-scan for fresh candidate rows.
+    //
+    // resolveFullRound runs the complete round (base spin + all freespins) in step 1.
+    // godMode holds its last array value once exhausted, so [...boardDraws, SAFE_GOD_VALUE]
+    // forces the specific base-spin board then keeps SAFE_GOD_VALUE for all freespin draws,
+    // preventing switch spins from firing uncontrollably during the freespin phase.
     const stripLen = 1000;
-    const boardDraws = [6, 12, 48, 0, 0, 0].map((row) => rawForStripRow(row, stripLen));
-    const stepOneRandom = [...boardDraws, SAFE_GOD_VALUE, SAFE_GOD_VALUE, SAFE_GOD_VALUE, SAFE_GOD_VALUE, SAFE_GOD_VALUE, SAFE_GOD_VALUE, SAFE_GOD_VALUE];
+    const boardDraws = [32, 79, 56, 0, 0, 0].map((row) => rawForStripRow(row, stripLen));
+    const godRandom = [...boardDraws, SAFE_GOD_VALUE];
 
     const stepOne = await callPlay(baseUrl, {
       round: {},
       game: {},
       req: { bet: 100, bet_type: "bet" },
       config: { rtp: null, purchased_features: [], gamble_limit: null },
-      god_data: { random: stepOneRandom },
+      god_data: { random: godRandom },
     });
 
+    const types = stepOne.resp.events.map((e) => e.type);
     const trigger = stepOne.resp.events.find((e) => e.type === "freeSpinTrigger");
-    assert.ok(trigger, `expected freeSpinTrigger, got types: ${stepOne.resp.events.map((e) => e.type)}`);
+    assert.ok(trigger, `expected freeSpinTrigger, got types: ${types}`);
     assert.equal(trigger.totalFs, 10);
-    assert.equal(stepOne.final, false, "triggering Free Spins must not end the round");
+    assert.equal(stepOne.final, false, "step 1 must be awaiting confirm");
+    assert.equal(stepOne.round.awaiting_confirm, true);
 
+    // selectedMode fires as the feature begins — must appear after freeSpinTrigger.
+    const triggerIdx = types.indexOf("freeSpinTrigger");
+    const selectedIdx = types.indexOf("selectedMode");
+    assert.ok(selectedIdx > triggerIdx, `selectedMode must appear after freeSpinTrigger; got: [${types}]`);
+    const selectedMode = stepOne.resp.events.find((e) => e.type === "selectedMode");
+    assert.equal(selectedMode.mode, "R");
+
+    // Confirm step closes the round with no new events.
     const stepTwo = await callPlay(baseUrl, {
       round: stepOne.round,
       game: stepOne.game,
@@ -254,7 +271,9 @@ test("a natural 3+ scatter landing in base mode triggers classic Free Spins, the
       config: { rtp: null, purchased_features: [], gamble_limit: null },
       god_data: { random: SAFE_GOD_VALUE },
     });
-    assert.equal(stepTwo.resp.events[0].type, "selectedMode", "the mode must be announced on the first step of the feature itself");
+    assert.equal(stepTwo.final, true);
+    assert.deepEqual(stepTwo.round, {});
+    assert.equal(stepTwo.resp.events.length, 0, "confirm step must return no events");
   } finally {
     server.close();
   }
@@ -312,13 +331,27 @@ test("a wincap hit (forced via a hand-crafted mid-sequence round) clips the win,
       god_data: { random },
     });
 
+    // Step 1: all events delivered, win applied, round awaiting confirm.
     const wincap = result.resp.events.find((e) => e.type === "wincap");
     assert.ok(wincap, `expected a wincap event, got types: ${result.resp.events.map((e) => e.type)}`);
     assert.equal(wincap.amount, 1000000); // 10,000x in centi-multiplier units
-    assert.equal(result.final, true, "a wincap hit must terminate the round immediately");
-    assert.deepEqual(result.round, {});
+    assert.equal(result.final, false, "step 1 must be awaiting confirm even on a wincap");
+    assert.equal(result.round.awaiting_confirm, true);
     assert.equal(result.finance[0].win_change, 1000000); // 10,000x * 100c bet, exact integer cents
     assert.equal(result.resp.events[result.resp.events.length - 1].type, "finalWin");
+
+    // Step 2: confirm closes the round, no additional win.
+    const confirm = await callPlay(baseUrl, {
+      round: result.round,
+      game: result.game,
+      req: { bet: 100, bet_type: "bet" },
+      config: { rtp: null, purchased_features: [], gamble_limit: null },
+      god_data: { random },
+    }, 2);
+    assert.equal(confirm.final, true);
+    assert.deepEqual(confirm.round, {});
+    assert.equal(confirm.finance[0].win_change, 0);
+    assert.equal(confirm.resp.events.length, 0, "confirm step must return no events");
   } finally {
     server.close();
   }

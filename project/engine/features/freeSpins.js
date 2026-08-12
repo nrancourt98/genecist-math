@@ -77,10 +77,12 @@ function checkFreeSpinContinuation(freeSpinState, board) {
 
 /**
  * @param {"R"|"S"} mode
- * @returns {{mode: "R"|"S", fs: number, totFs: number, reelSet: "FR0"|"FR1"}}
+ * @param {boolean} [isBuy=false] - true for bonus/super buy sessions; selects buy-specific strips
+ * @returns {{mode: "R"|"S", fs: number, totFs: number, reelSet: "FR0"|"FR0_BUY"|"FR1"|"FR1_BUY"}}
  */
-function createInitialFreeSpinState(mode) {
-  return { mode, fs: 0, totFs: INITIAL_FREE_SPINS, reelSet: mode === "S" ? "FR1" : "FR0" };
+function createInitialFreeSpinState(mode, isBuy = false) {
+  const reelSet = mode === "S" ? (isBuy ? "FR1_BUY" : "FR1") : (isBuy ? "FR0_BUY" : "FR0");
+  return { mode, fs: 0, totFs: INITIAL_FREE_SPINS, reelSet };
 }
 
 /**
