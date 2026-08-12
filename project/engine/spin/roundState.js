@@ -8,6 +8,7 @@ const { BASEPLUS_COST_MULTIPLIER } = require("../features/basePlus");
 const BET_MODE_COST_MULTIPLIER = {
   base: 1,
   baseplus: BASEPLUS_COST_MULTIPLIER,
+  feature_spins: 20,
   bonus: 100,
   super: 300,
 };
@@ -48,7 +49,10 @@ function createInitialRoundState(betMode, betAmountCents) {
   // docs/architecture.md's judgment-call log, "buy-feature triggering board". freeSpin is
   // pre-populated here already so that step knows which mode (and thus scatter count) to
   // synthesize.
-  if (betMode === "bonus") {
+  if (betMode === "feature_spins") {
+    roundState.phase = "buyTrigger";
+    roundState.freeSpin = createInitialFreeSpinState("R", false); // natural FR0 reels, natural spin bag
+  } else if (betMode === "bonus") {
     roundState.phase = "buyTrigger";
     roundState.freeSpin = createInitialFreeSpinState("R", true);
   } else if (betMode === "super") {

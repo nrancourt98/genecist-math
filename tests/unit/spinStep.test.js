@@ -310,5 +310,5 @@ test("resolveOneSpin throws if called on a round already in phase done", () => {
 });
 
 test("VALID_BET_MODES sanity check - this suite covers every mode", () => {
-  assert.deepEqual(new Set(VALID_BET_MODES), new Set(["base", "baseplus", "bonus", "super"]));
+  assert.deepEqual(new Set(VALID_BET_MODES), new Set(["base", "baseplus", "feature_spins", "bonus", "super"]));
 });

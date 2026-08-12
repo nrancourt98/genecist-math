@@ -18,17 +18,18 @@ sessions:
   # https://your-domain.example/?token=<that value>. Add more entries here for additional
   # testers/currencies/locales as needed - see BGaming's config.yml reference for the full
   # per-session field set (state/currency/locale/bet_limits/etc.).
-  dev0000000000000000000000000001:
+  7231383e4f10df311df04a27895a4aac:
     state: active
     currency: usd
     locale: en
     bet_limits: [50, 100, 200, 500, 1000, 2000]
     freebets_limits: [50, 100, 200, 500, 1000, 2000]
     default_bet: 100
-    # Must use runner-recognized names (buy_bonus / buy_chance / buy_bonus_and_chance).
-    # buy_bonus → R-mode bonus buy (100×); buy_chance → S-mode super buy (300×).
-    # Mapped to internal bet modes in playHandler.js's PURCHASED_FEATURE_TO_BET_MODE.
-    purchased_features: ["buy_bonus", "buy_chance"]
+    # runner_cli only accepts: buy_bonus / buy_chance / buy_bonus_and_chance.
+    # Production (BGaming's hosted runner) accepts our own custom names too - see
+    # bgaming-compliance.md "Buy-bonus" and playHandler.js PURCHASED_FEATURE_TO_BET_MODE.
+    # Dev-testing aliases: buy_chance → feature_spins ($20), buy_bonus_and_chance → super ($300).
+    purchased_features: ["buy_bonus", "buy_chance", "buy_bonus_and_chance"]
     balance: 1000000
     rtp: "96"
 

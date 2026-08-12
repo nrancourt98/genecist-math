@@ -27,12 +27,21 @@ const { maybeCreateGodRng } = require("./godMode");
 
 // Our own custom req fields (BGaming's docs explicitly allow custom req fields - see
 // docs/architecture.md's judgment-call log):
-// - req.purchased_feature: "buy_bonus" (100x, R-mode) | "buy_chance" (300x, S-mode) -
-//   buys straight into the matching free-spin mode, skipping the base phase entirely.
-//   Names are runner-constrained: only buy_bonus/buy_chance/buy_bonus_and_chance are valid.
+// - req.purchased_feature: selects a buy-feature mode. BGaming's docs allow custom values
+//   here (see bgaming-compliance.md "Buy-bonus"), so we use our own names in production.
+//   The local runner_cli dev tool only accepts buy_bonus/buy_chance/buy_bonus_and_chance,
+//   so those are mapped as aliases for dev testing (same internal modes, different wire name).
 // - req.bet_mode: "baseplus" - opts a *normal* (non-buy) round into the ante-bet mode
 //   with boosted free-spin odds. Defaults to "base" when absent/unrecognized.
-const PURCHASED_FEATURE_TO_BET_MODE = { buy_bonus: "bonus", buy_chance: "super" };
+const PURCHASED_FEATURE_TO_BET_MODE = {
+  // Production custom names (used when connecting to BGaming's hosted runner)
+  buy_feature_spins: "feature_spins", // $20 - R-mode FS, natural reels
+  buy_bonus:         "bonus",          // $100 - R-mode FS, buy-enhanced reels
+  buy_super:         "super",          // $300 - S-mode FS, buy-enhanced reels
+  // runner_cli dev-testing aliases (runner_cli whitelist only accepts these three names)
+  buy_chance:           "feature_spins", // maps to feature_spins in dev
+  buy_bonus_and_chance: "super",         // maps to super in dev
+};
 
 function resolveBetMode(req) {
   if (req.purchased_feature) {
