@@ -33,6 +33,10 @@ function switchingSymbolsEvent(switchedSymbols) {
   return { type: "switchingSymbols", switchedSymbols };
 }
 
+function updateBoardEvent(board) {
+  return { type: "updateBoard", board };
+}
+
 // Initial trigger AND a mid-feature upgrade both use this shape (the Python source's
 // fs_trigger_event emits this same shape for both - it only switches to the
 // freeSpinRetrigger shape when an fs_added value is involved).
@@ -69,6 +73,7 @@ module.exports = {
   newSwitchSpinsEvent,
   updateSwitchSpinsEvent,
   switchingSymbolsEvent,
+  updateBoardEvent,
   freeSpinTriggerEvent,
   freeSpinRetriggerEvent,
   selectedModeEvent,

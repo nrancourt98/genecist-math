@@ -5,8 +5,8 @@ const { getPayoutCenti } = require("../../project/engine/config/paytable");
 test("paytable: H5 column matches game_config.py verbatim", () => {
   assert.equal(getPayoutCenti(3, "H5"), 500);
   assert.equal(getPayoutCenti(4, "H5"), 1000);
-  assert.equal(getPayoutCenti(5, "H5"), 2000);
-  assert.equal(getPayoutCenti(6, "H5"), 4000);
+  assert.equal(getPayoutCenti(5, "H5"), 1500);
+  assert.equal(getPayoutCenti(6, "H5"), 2000);
 });
 
 test("paytable: low symbols and decimal multipliers convert exactly", () => {
@@ -16,7 +16,7 @@ test("paytable: low symbols and decimal multipliers convert exactly", () => {
 });
 
 test("paytable: wild only has a 6-kind entry", () => {
-  assert.equal(getPayoutCenti(6, "W"), 5000);
+  assert.equal(getPayoutCenti(6, "W"), 2000);
   assert.equal(getPayoutCenti(3, "W"), undefined);
   assert.equal(getPayoutCenti(4, "W"), undefined);
   assert.equal(getPayoutCenti(5, "W"), undefined);

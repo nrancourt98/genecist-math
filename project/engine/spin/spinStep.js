@@ -105,7 +105,10 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
   out.push(events.revealEvent(board, "basegame", randomPaddingPositions(rng, reelStrip), [0, 0, 0, 0, 0, 0]));
 
   const changes = sequenceWasActive ? applySwitchReplacement(board, state.switch) : [];
-  if (changes.length > 0) out.push(events.switchingSymbolsEvent(changes));
+  if (changes.length > 0) {
+    out.push(events.switchingSymbolsEvent(changes));
+    out.push(events.updateBoardEvent(board));
+  }
   assignWildMultipliers(board, gameMode, rng); // picks up any switch-created W cells
 
   evaluateAndRecordWin(state, board, "basegameWinsCenti", out);
@@ -212,7 +215,10 @@ function resolveFreeSpinStep(state, rng, out, reelProvider) {
   // base gate prevents the catastrophic always-replacing bug described at line 82).
   const sModePoolActive = gameMode === "S" && state.switch.symbols.length > 0;
   const changes = (sequenceWasActive || sModePoolActive) ? applySwitchReplacement(board, state.switch) : [];
-  if (changes.length > 0) out.push(events.switchingSymbolsEvent(changes));
+  if (changes.length > 0) {
+    out.push(events.switchingSymbolsEvent(changes));
+    out.push(events.updateBoardEvent(board));
+  }
   assignWildMultipliers(board, gameMode, rng); // picks up any switch-created W cells
 
   evaluateAndRecordWin(state, board, "freegameWinsCenti", out);

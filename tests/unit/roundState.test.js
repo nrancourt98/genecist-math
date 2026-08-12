@@ -34,13 +34,13 @@ test("baseplus mode starts in the base phase, same as base", () => {
 test("bonus mode starts at the synthetic buy-trigger phase, pre-populated for R-mode free spins", () => {
   const state = createInitialRoundState("bonus", 10000);
   assert.equal(state.phase, "buyTrigger");
-  assert.deepEqual(state.freeSpin, { mode: "R", fs: 0, totFs: 10, reelSet: "FR0" });
+  assert.deepEqual(state.freeSpin, { mode: "R", fs: 0, totFs: 10, reelSet: "FR0_BUY" });
 });
 
 test("super mode starts at the synthetic buy-trigger phase, pre-populated for S-mode super free spins", () => {
   const state = createInitialRoundState("super", 30000);
   assert.equal(state.phase, "buyTrigger");
-  assert.deepEqual(state.freeSpin, { mode: "S", fs: 0, totFs: 10, reelSet: "FR1" });
+  assert.deepEqual(state.freeSpin, { mode: "S", fs: 0, totFs: 10, reelSet: "FR1_BUY" });
 });
 
 test("every bet mode's initial state survives a JSON round-trip unchanged", () => {

@@ -221,14 +221,14 @@ test("switch sequence: decrement-before-draw ordering and board-wide replacement
   const rng1 = createMockRng({
     randInts: [
       0, 0, 0, 0, 0, 0, // drawBoard
-      0, // maybeDropSwitch: randInt(6) === 0 -> drop
+      0, // maybeDropSwitch: randInt(31) === 0 -> drop
       2, // dropped reel
       1, // dropped row
       0, 0, 0, 0, 0, 0, // randomPaddingPositions
+      0, // resolveSwitchAward: randInt(3)===0 -> wild=true
     ],
-    randBools: [true], // switch_wild
-    bagPicks: [3, 2], // spinsAwarded from SPINS_AWARD_BAG_BASE_AND_R, numToAdd from SYMBOL_COUNT_BAG
-    samples: [["L1", "H1"]], // new switch target symbols
+    // spinsAwarded=3, numToAdd=2, then weightedSampleSymbols picks for each new symbol
+    bagPicks: [3, 2, "L1", "H1"],
   });
   const state0 = createInitialRoundState("base", 100);
 
@@ -253,7 +253,7 @@ test("switch sequence: decrement-before-draw ordering and board-wide replacement
 
   const spin2 = resolveOneSpin(spin1.roundState, rng2, reelProvider2);
 
-  assert.deepEqual(spin2.events.map((e) => e.type), ["updateSwitchSpins", "reveal", "switchingSymbols", "setTotalWin"]);
+  assert.deepEqual(spin2.events.map((e) => e.type), ["updateSwitchSpins", "reveal", "switchingSymbols", "updateBoard", "setTotalWin"]);
   assert.equal(spin2.events[0].spins, 2); // decremented from 3 to 2
   const switching = spin2.events.find((e) => e.type === "switchingSymbols");
   assert.equal(switching.switchedSymbols.length, 5); // every row of reel 0 was "L1" (1-row strip)

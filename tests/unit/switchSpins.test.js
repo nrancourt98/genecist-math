@@ -63,7 +63,8 @@ test("maybeDropSwitch: R-mode has NO cap - still draws and can drop even with al
 
 test("resolveSwitchAward: first drop of a sequence rolls wild persistence, spins, and target symbols", () => {
   const state = createInitialSwitchState();
-  const rng = createMockRng({ randBools: [true], bagPicks: [3, 1], samples: [["L3"]] });
+  // randInt(3)===0 → wild=true; bagPicks: spins=3, numToAdd=1, then weightedSampleSymbols pick
+  const rng = createMockRng({ randInts: [0], bagPicks: [3, 1, "L3"] });
   const result = resolveSwitchAward(state, "base", rng);
 
   assert.equal(result.wild, true);
@@ -75,8 +76,9 @@ test("resolveSwitchAward: first drop of a sequence rolls wild persistence, spins
 
 test("resolveSwitchAward: a stacking drop mid-sequence does not re-roll wild persistence", () => {
   const state = { spins: 2, symbols: ["L3"], wild: true };
-  // No randBools queued - would throw if the code incorrectly tried to re-roll wild.
-  const rng = createMockRng({ bagPicks: [1, 1], samples: [["H2"]] });
+  // No randInts queued - would throw if code incorrectly tried to re-roll wild.
+  // Third bagPick is weightedSampleSymbols picking the new symbol.
+  const rng = createMockRng({ bagPicks: [1, 1, "H2"] });
   const result = resolveSwitchAward(state, "base", rng);
 
   assert.equal(result.wild, true); // unchanged
@@ -88,7 +90,8 @@ test("resolveSwitchAward: a stacking drop mid-sequence does not re-roll wild per
 test("resolveSwitchAward: numToAdd is clamped to the remaining available pool", () => {
   // 8 of the 9 eligible symbols already chosen - only "H4" remains available.
   const state = { spins: 0, symbols: ["L1", "L2", "L3", "L4", "L5", "H1", "H2", "H3"], wild: null };
-  const rng = createMockRng({ randBools: [false], bagPicks: [2, 3], samples: [["H4"]] });
+  // randInt(3)→1 (wild=false); bagPicks: spins=2, numToAdd=3 (clamped to 1), then weightedSample pick
+  const rng = createMockRng({ randInts: [1], bagPicks: [2, 3, "H4"] });
   const result = resolveSwitchAward(state, "base", rng);
 
   assert.equal(result.symbols.length, 9);
@@ -98,17 +101,19 @@ test("resolveSwitchAward: numToAdd is clamped to the remaining available pool", 
 test("resolveSwitchAward: adds zero new symbols once the pool is fully exhausted (R-mode's no-cap path)", () => {
   const allNine = ["L1", "L2", "L3", "L4", "L5", "H1", "H2", "H3", "H4"];
   const state = { spins: 0, symbols: allNine.slice(), wild: null };
-  // No `samples` queued - would throw if sampleWithoutReplacement were called with count 0.
-  const rng = createMockRng({ randBools: [true], bagPicks: [5, 4] });
+  // R-mode: WILD_CHANCE_ONE_IN.R=0 → no wild roll at all (short-circuit, no RNG draw).
+  // No third bagPick - weightedSampleSymbols is skipped entirely when available=[].
+  const rng = createMockRng({ bagPicks: [2, 3] });
   const result = resolveSwitchAward(state, "R", rng);
 
   assert.deepEqual(result.symbols, allNine); // unchanged - nothing left to add
-  assert.equal(result.spinsAwarded, 5);
+  assert.equal(result.spinsAwarded, 2);
 });
 
 test("resolveSwitchAward: S-mode draws from its own (slightly different) spins-award bag", () => {
   const state = createInitialSwitchState();
-  const rng = createMockRng({ randBools: [true], bagPicks: [7, 1], samples: [["L1"]] });
+  // S-mode: WILD_CHANCE_ONE_IN.S=0 → no wild roll. Third pick is weightedSampleSymbols.
+  const rng = createMockRng({ bagPicks: [7, 1, "L1"] });
   const result = resolveSwitchAward(state, "S", rng);
   assert.equal(result.spinsAwarded, 7); // valid in the S-mode bag
 });
@@ -184,7 +189,7 @@ test("statistical: maybeDropSwitch base-mode RESTACK drop rate (active sequence)
   );
 });
 
-test("statistical: spins-award bag (base/R) produces 1 about 16% of the time, matching its 5/31 weight", () => {
+test("statistical: spins-award bag (base) produces 1 about 40% of the time, matching its 4/10 weight", () => {
   const rng = createLocalPrng(12);
   const { SPINS_AWARD_BAG_BASE_AND_R } = require("../../project/engine/config/switchTables");
   let onesCount = 0;
@@ -193,5 +198,5 @@ test("statistical: spins-award bag (base/R) produces 1 about 16% of the time, ma
     if (rng.pickFromBag(SPINS_AWARD_BAG_BASE_AND_R) === 1) onesCount++;
   }
   const ratio = onesCount / total;
-  assert.ok(ratio > 0.13 && ratio < 0.19, `ratio ${ratio} not close to expected ~0.161 (5/31)`);
+  assert.ok(ratio > 0.35 && ratio < 0.45, `ratio ${ratio} not close to expected ~0.4 (4/10)`);
 });

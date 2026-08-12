@@ -41,7 +41,7 @@ test("6 wilds with no non-wild anchor anywhere pay as a pure-wild line (50x)", (
   assert.equal(results.length, 1);
   assert.equal(results[0].symbol, "W");
   assert.equal(results[0].kind, 6);
-  assert.equal(results[0].payoutCenti, 5000);
+  assert.equal(results[0].payoutCenti, 2000);
 });
 
 test("a long wild prefix anchors to the first real symbol it finds, not to whichever symbol would pay best", () => {
