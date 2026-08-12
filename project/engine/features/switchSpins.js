@@ -57,16 +57,20 @@ function createInitialSwitchState() {
  * @param {{spins: number, symbols: string[]}} switchState
  * @param {"base"|"R"|"S"} gameMode
  * @param {import("../rng/rngInterface")} rng
+ * @param {boolean} [forceDrop=false] - when true, skips the probability roll and always
+ *   places a drop (used by the feature_spins buy mode's guaranteed first-spin drop)
  * @returns {{reel: number, row: number}|null}
  */
-function maybeDropSwitch(switchState, gameMode, rng) {
+function maybeDropSwitch(switchState, gameMode, rng, forceDrop = false) {
   if (BLOCKS_AT_SYMBOL_CAP[gameMode] && switchState.symbols.length >= SYMBOL_CAP) {
     return null;
   }
 
-  const chanceTable = switchState.spins > 0 ? RESTACK_DROP_CHANCE_ONE_IN : INITIAL_DROP_CHANCE_ONE_IN;
-  const dropped = rng.randInt(chanceTable[gameMode]) === 0;
-  if (!dropped) return null;
+  if (!forceDrop) {
+    const chanceTable = switchState.spins > 0 ? RESTACK_DROP_CHANCE_ONE_IN : INITIAL_DROP_CHANCE_ONE_IN;
+    const dropped = rng.randInt(chanceTable[gameMode]) === 0;
+    if (!dropped) return null;
+  }
 
   const reel = rng.randInt(6);
   const row = rng.randInt(5);

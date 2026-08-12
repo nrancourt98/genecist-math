@@ -164,6 +164,27 @@ body {
 .btn-danger { background: transparent; border: 1px solid var(--border); color: var(--muted); }
 .btn-danger:hover:not(:disabled) { border-color: var(--error); color: var(--error); }
 .sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+.mode-cost {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  opacity: .65;
+  margin-left: 3px;
+}
+.alias-note {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 6px 2px 0;
+}
+.alias-note code {
+  font-family: "Consolas","Menlo","Monaco",monospace;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+}
 
 .round-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pill {
@@ -396,7 +417,7 @@ body {
       <div class="row-2">
         <div class="field">
           <label>Session Token</label>
-          <input id="token" type="text" placeholder="dev0000000000000000000000000001" spellcheck="false" autocomplete="off" />
+          <input id="token" type="text" placeholder="7231383e4f10df311df04a27895a4aac" value="7231383e4f10df311df04a27895a4aac" spellcheck="false" autocomplete="off" />
         </div>
         <div class="field">
           <label>Bet (subunits)</label>
@@ -423,12 +444,18 @@ body {
       <div class="actions">
         <button class="btn btn-primary" onclick="doInit()">Init Session</button>
         <div class="sep"></div>
-        <button class="btn btn-ghost" onclick="startPlay('base')">Base Spin</button>
-        <button class="btn btn-ghost" onclick="startPlay('buy_bonus')">Buy Bonus</button>
-        <button class="btn btn-ghost" onclick="startPlay('buy_super')">Buy Super</button>
+        <button class="btn btn-ghost" onclick="startPlay({label:'base'})">Base <span class="mode-cost">1×</span></button>
+        <button class="btn btn-ghost" onclick="startPlay({betMode:'baseplus',label:'baseplus'})">Baseplus <span class="mode-cost">1.25×</span></button>
+        <button class="btn btn-ghost" onclick="startPlay({purchasedFeature:'buy_chance',label:'feature spins'})">Feature Spins <span class="mode-cost">20×</span></button>
+        <button class="btn btn-ghost" onclick="startPlay({purchasedFeature:'buy_bonus',label:'bonus'})">Bonus <span class="mode-cost">100×</span></button>
+        <button class="btn btn-ghost" onclick="startPlay({purchasedFeature:'buy_bonus_and_chance',label:'super'})">Super <span class="mode-cost">300×</span></button>
         <div class="sep"></div>
         <button class="btn btn-ghost" id="continueBtn" disabled onclick="continuePlay()">Next Step</button>
         <button class="btn btn-danger" onclick="resetRound()">Reset</button>
+      </div>
+      <div class="alias-note">
+        Runner_cli dev aliases: <code>buy_chance</code> → feature_spins &nbsp;·&nbsp; <code>buy_bonus</code> → bonus &nbsp;·&nbsp; <code>buy_bonus_and_chance</code> → super
+        &nbsp;|&nbsp; Production names: <code>buy_feature_spins</code> / <code>buy_bonus</code> / <code>buy_super</code>
       </div>
     </div>
   </div>
@@ -497,14 +524,15 @@ body {
     call('init', { token: c.token }, 'init');
   };
 
-  window.startPlay = function (mode) {
+  window.startPlay = function (opts) {
     var c = cfg();
     resetRound();
     var req = { bet: c.bet };
-    if (mode !== 'base') req.purchased_feature = mode;
+    if (opts.purchasedFeature) req.purchased_feature = opts.purchasedFeature;
+    if (opts.betMode) req.bet_mode = opts.betMode;
     var params = { token: c.token, req: req };
     if (stateLock) params.state_lock = stateLock;
-    call('play', params, 'play · ' + (mode === 'base' ? 'base spin' : mode));
+    call('play', params, 'play · ' + (opts.label || 'base spin'));
   };
 
   window.continuePlay = function () {

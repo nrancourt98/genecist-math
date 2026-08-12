@@ -21,10 +21,10 @@ const { maybeApplyBasePlusBoost } = require("../features/basePlus");
 const { SCATTER } = require("../config/symbols");
 const events = require("./events");
 
-// base/baseplus reach this for their real base-game spins; bonus/super reach it too, but
+// base/baseplus/feature_spins use this for their real base-game spins; bonus/super use it
 // only for resolveBuyTriggerStep's synthetic filler board (see createInitialRoundState's
 // "buyTrigger" phase) - they never reach resolveBaseSpinStep itself.
-const BASE_REEL_BY_MODE = { base: "BR0", baseplus: "BR0", bonus: "BR0", super: "BR0" };
+const BASE_REEL_BY_MODE = { base: "BR0", baseplus: "BR0", feature_spins: "BR0", bonus: "BR0", super: "BR0" };
 
 /**
  * Resolve exactly one spin-equivalent of work: one board reveal, its line evaluation,
@@ -97,7 +97,12 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
 
   assignWildMultipliers(board, gameMode, rng);
 
-  const dropPosition = maybeDropSwitch(state.switch, gameMode, rng);
+  // feature_spins buy mode: first spin is a guaranteed SW drop to kick off the sequence.
+  // The flag is cleared here so subsequent switch-resolution spins use normal probability.
+  const forceDrop = state.guaranteedSwitchDrop === true;
+  if (forceDrop) state.guaranteedSwitchDrop = false;
+
+  const dropPosition = maybeDropSwitch(state.switch, gameMode, rng, forceDrop);
   if (dropPosition) {
     board[dropPosition.reel][dropPosition.row] = { name: "SW", switch: true };
   }

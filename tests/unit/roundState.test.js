@@ -31,6 +31,13 @@ test("baseplus mode starts in the base phase, same as base", () => {
   assert.equal(state.freeSpin, null);
 });
 
+test("feature_spins mode starts in the base phase with no free-spin state and a guaranteed switch drop", () => {
+  const state = createInitialRoundState("feature_spins", 2000);
+  assert.equal(state.phase, "base");
+  assert.equal(state.freeSpin, null);
+  assert.equal(state.guaranteedSwitchDrop, true);
+});
+
 test("bonus mode starts at the synthetic buy-trigger phase, pre-populated for R-mode free spins", () => {
   const state = createInitialRoundState("bonus", 10000);
   assert.equal(state.phase, "buyTrigger");
@@ -54,6 +61,7 @@ test("every bet mode's initial state survives a JSON round-trip unchanged", () =
 test("cost multipliers match the bet-mode table", () => {
   assert.equal(BET_MODE_COST_MULTIPLIER.base, 1);
   assert.equal(BET_MODE_COST_MULTIPLIER.baseplus, 1.25);
+  assert.equal(BET_MODE_COST_MULTIPLIER.feature_spins, 20);
   assert.equal(BET_MODE_COST_MULTIPLIER.bonus, 100);
   assert.equal(BET_MODE_COST_MULTIPLIER.super, 300);
 });

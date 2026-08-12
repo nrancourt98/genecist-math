@@ -50,8 +50,7 @@ function createInitialRoundState(betMode, betAmountCents) {
   // pre-populated here already so that step knows which mode (and thus scatter count) to
   // synthesize.
   if (betMode === "feature_spins") {
-    roundState.phase = "buyTrigger";
-    roundState.freeSpin = createInitialFreeSpinState("R", false); // natural FR0 reels, natural spin bag
+    roundState.guaranteedSwitchDrop = true; // first base spin is a guaranteed SW drop
   } else if (betMode === "bonus") {
     roundState.phase = "buyTrigger";
     roundState.freeSpin = createInitialFreeSpinState("R", true);
