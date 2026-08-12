@@ -259,7 +259,9 @@ test("switch sequence: decrement-before-draw ordering and board-wide replacement
   assert.equal(switching.switchedSymbols.length, 5); // every row of reel 0 was "L1" (1-row strip)
   assert.ok(switching.switchedSymbols.every((c) => c.symbol === "W"));
   const revealBoard = spin2.events.find((e) => e.type === "reveal").board;
-  assert.ok(revealBoard[0].every((cell) => cell.name === "W")); // every row of reel 0 replaced
+  assert.ok(revealBoard[0].every((cell) => cell.name === "L1")); // pre-replacement: original symbol still showing
+  const updateBoard = spin2.events.find((e) => e.type === "updateBoard").board;
+  assert.ok(updateBoard[0].every((cell) => cell.name === "W")); // post-replacement: now W
   assert.equal(spin2.roundState.switch.spins, 2);
   assert.equal(spin2.roundState.phase, "base");
 });

@@ -2,7 +2,7 @@
 // library/configs/event_config_base.json. See docs/game-design-spec.md.
 
 function revealEvent(board, gameType, paddingPositions, anticipation) {
-  return { type: "reveal", board, paddingPositions, gameType, anticipation };
+  return { type: "reveal", board: structuredClone(board), paddingPositions, gameType, anticipation };
 }
 
 function winInfoEvent(totalWin, wins) {
@@ -34,7 +34,7 @@ function switchingSymbolsEvent(switchedSymbols) {
 }
 
 function updateBoardEvent(board) {
-  return { type: "updateBoard", board };
+  return { type: "updateBoard", board: structuredClone(board) };
 }
 
 // Initial trigger AND a mid-feature upgrade both use this shape (the Python source's
