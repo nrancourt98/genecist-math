@@ -25,10 +25,10 @@ sessions:
     bet_limits: [50, 100, 200, 500, 1000, 2000]
     freebets_limits: [50, 100, 200, 500, 1000, 2000]
     default_bet: 100
-    # Matches playHandler.js's PURCHASED_FEATURE_TO_BET_MODE exactly (engine/backend/src/
-    # playHandler.js) - BGaming's generic example values (buy_chance/buy_bonus_and_chance)
-    # don't apply to this game, only these two do.
-    purchased_features: ["buy_bonus", "buy_super"]
+    # Must use runner-recognized names (buy_bonus / buy_chance / buy_bonus_and_chance).
+    # buy_bonus → R-mode bonus buy (100×); buy_chance → S-mode super buy (300×).
+    # Mapped to internal bet modes in playHandler.js's PURCHASED_FEATURE_TO_BET_MODE.
+    purchased_features: ["buy_bonus", "buy_chance"]
     balance: 1000000
     rtp: "96"
 
