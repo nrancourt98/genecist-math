@@ -4,6 +4,7 @@ const {
   SPINS_AWARD_BAG_R,
   SPINS_AWARD_BAG_R_BUY,
   SPINS_AWARD_BAG_S,
+  SPINS_AWARD_BAG_S_BUY,
   SPINS_AWARD_BAG_FEATURE_SPINS,
   SYMBOL_COUNT_BAG,
   INITIAL_DROP_CHANCE_ONE_IN,
@@ -116,7 +117,7 @@ function resolveSwitchAward(switchState, gameMode, rng, isBuy = false, betMode =
   }
 
   const spinsBag =
-    gameMode === "S" ? SPINS_AWARD_BAG_S :
+    gameMode === "S" ? (isBuy ? SPINS_AWARD_BAG_S_BUY : SPINS_AWARD_BAG_S) :
     gameMode === "R" ? (isBuy ? SPINS_AWARD_BAG_R_BUY : SPINS_AWARD_BAG_R) :
     betMode === "feature_spins" ? SPINS_AWARD_BAG_FEATURE_SPINS :
     SPINS_AWARD_BAG_BASE_AND_R;

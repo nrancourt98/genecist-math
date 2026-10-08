@@ -98,6 +98,22 @@ test("resolveSwitchAward: numToAdd is clamped to the remaining available pool", 
   assert.ok(result.symbols.includes("H4"));
 });
 
+test("resolveSwitchAward: S-mode uses the natural spins bag for natural sessions and the buy bag for buys", () => {
+  const { SPINS_AWARD_BAG_S, SPINS_AWARD_BAG_S_BUY } = require("../../project/engine/config/switchTables");
+  const spinsBagUsed = (isBuy) => {
+    // S-mode: WILD_CHANCE_ONE_IN.S=0 → no wild roll. bagPicks: spins, numToAdd, symbol pick.
+    const rng = createMockRng({ bagPicks: [1, 1, "H4"] });
+    const bags = [];
+    const pickFromBag = rng.pickFromBag;
+    rng.pickFromBag = (bag) => { bags.push(bag); return pickFromBag(bag); };
+    resolveSwitchAward(createInitialSwitchState(), "S", rng, isBuy);
+    return bags[0];
+  };
+
+  assert.equal(spinsBagUsed(false), SPINS_AWARD_BAG_S);
+  assert.equal(spinsBagUsed(true), SPINS_AWARD_BAG_S_BUY);
+});
+
 test("resolveSwitchAward: adds zero new symbols once the pool is fully exhausted (R-mode's no-cap path)", () => {
   const allNine = ["L1", "L2", "L3", "L4", "L5", "H1", "H2", "H3", "H4"];
   const state = { spins: 0, symbols: allNine.slice(), wild: null };

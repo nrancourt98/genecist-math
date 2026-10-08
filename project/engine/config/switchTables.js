@@ -10,22 +10,39 @@ const SPINS_AWARD_BAG_BASE_AND_R = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]; // mean 2.0; 
 const SPINS_AWARD_BAG_R = [1, 1, 1, 1, 1, 1, 1, 1, 2, 3]; // mean 1.4; 1=80%, 2=10%, 3=10%
 
 // R-mode bag for bonus BUY sessions only. Richer than the natural-FS R bag (mean 1.4)
-// to deliver ~96% RTP at 100x cost. Max capped at 6 (vs S-mode's 10) since R-mode
-// sequences convert fewer symbols per spin — a 6-spin sequence still feels substantial.
-const SPINS_AWARD_BAG_R_BUY = [1, 1, 2, 2, 3, 4, 4, 5, 6, 8]; // mean 3.6; max 8
+// to deliver ~96% RTP at 100x cost. Max capped at 8 (vs S-mode's 10) since R-mode
+// sequences convert fewer symbols per spin.
+// 20 entries so it can take half-steps: one of the two 8s is a 7 (8->7 on a 10-entry bag
+// overshot to 95.8%). Bonus 96.16% over 12M rounds (2026-10).
+const SPINS_AWARD_BAG_R_BUY = [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 8]; // mean 3.55; max 8
 
 // S-mode (super free spins) uses a slightly different, lower-skewed bag.
 // gamestate.py run_super_freespin:313, upgrade_super_freespin:408.
 // Extended with 3 extra 1s to lower the mean (2.91 vs original 3.10) while keeping max=10.
 // 1-spin: 41%, 2-spin: 19%, 3-spin: 16%, 4-spin: 6%, 5–10: rare; 10-spin jackpot preserved.
-const SPINS_AWARD_BAG_S = [
+// Used by buy sessions (super, and bonus after an R->S upgrade) - calibrated for super at 300x.
+const SPINS_AWARD_BAG_S_BUY = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10,
+];
+
+// S-mode bag for naturally-triggered/upgraded Super FS (base, baseplus, feature_spins). Split
+// from the buy bag (same pattern as R / R_BUY) so base RTP can be tuned without moving super.
+// S-mode sessions carry most of base's free-spin value (incl. R->S upgrades), and this bag's
+// 32 entries give fine steps (~0.25pp base RTP per +1 to the bag total).
+// vs the buy bag: three 1s -> 2 and one 1 -> 3 (mean 3.06 vs 2.91) -> base 95.90% (2026-10).
+const SPINS_AWARD_BAG_S = [
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10,
 ];
 
 // feature_spins buy mode: guaranteed first-spin drop on base reels at 20× cost.
 // Needs a much richer bag than the standard base bag (mean 2.0) to reach 96% RTP.
-// Mean 6.7 spins × (base win per sequence at mean 2.07 spins) ≈ 18-20× avg win against 20× cost.
-const SPINS_AWARD_BAG_FEATURE_SPINS = [5, 6, 6, 7, 8, 8, 9, 9, 10, 12]; // mean 8.0
+// Steep lever: each +0.1 on the mean is ~+1.2pp RTP, so 40 entries for quarter-steps:
+// three copies of [5,6,6,7,8,8,9,10,10,13] (mean 8.2 -> 96.33%) plus one with a 10 -> 9
+// (mean 8.1). Mean 8.175 -> 96.04% (2026-10).
+const SPINS_AWARD_BAG_FEATURE_SPINS = [
+  5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8,
+  9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 13, 13, 13, 13,
+];
 
 // Count of NEW switch-target symbols to add per drop, shared across all modes.
 // gamestate.py run_spin:119, run_freespin:215, run_super_freespin:315, upgrade_super_freespin:410.
@@ -94,6 +111,7 @@ module.exports = {
   SPINS_AWARD_BAG_R,
   SPINS_AWARD_BAG_R_BUY,
   SPINS_AWARD_BAG_S,
+  SPINS_AWARD_BAG_S_BUY,
   SPINS_AWARD_BAG_FEATURE_SPINS,
   SYMBOL_COUNT_BAG,
   INITIAL_DROP_CHANCE_ONE_IN,
