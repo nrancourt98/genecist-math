@@ -22,6 +22,11 @@ const SPINS_AWARD_BAG_S = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10,
 ];
 
+// feature_spins buy mode: guaranteed first-spin drop on base reels at 20× cost.
+// Needs a much richer bag than the standard base bag (mean 2.0) to reach 96% RTP.
+// Mean 6.7 spins × (base win per sequence at mean 2.07 spins) ≈ 18-20× avg win against 20× cost.
+const SPINS_AWARD_BAG_FEATURE_SPINS = [5, 6, 6, 7, 8, 8, 9, 9, 10, 12]; // mean 8.0
+
 // Count of NEW switch-target symbols to add per drop, shared across all modes.
 // gamestate.py run_spin:119, run_freespin:215, run_super_freespin:315, upgrade_super_freespin:410.
 const SYMBOL_COUNT_BAG = [
@@ -45,7 +50,12 @@ const SYMBOL_COUNT_BAG = [
 //   accounted for 93% of total win). RESTACK is kept far rarer than INITIAL specifically
 //   to keep that compounding tail negligible while still allowing it in principle, since
 //   the designer wants stacking preserved as a mechanic, not removed.
-const INITIAL_DROP_CHANCE_ONE_IN = { base: 31, R: 14, S: 14 }; // base: 3.2%/spin; R/S: 7.1%/spin → ~52% in 10 spins, ~70% over avg 18-spin session
+// Natural FS (base/baseplus modes): R=23 → ~37% trigger rate over 10 spins, calibrated to
+// give ~96% total base-mode RTP without over-powering natural free spins.
+// Buy FS (bonus/super): keeps the original R=14 (~52% over 10 spins) so bonus/super
+// maintain their richer switch frequency without needing heavy FR0_BUY weight adjustments.
+const INITIAL_DROP_CHANCE_ONE_IN = { base: 31, R: 23, S: 14 };
+const INITIAL_DROP_CHANCE_ONE_IN_BUY = { base: 31, R: 14, S: 14 };
 const RESTACK_DROP_CHANCE_ONE_IN = { base: 4000, R: 2500, S: 3000 };
 
 // Base game and S-mode both block further SW drops once switch_symbols reaches 9 unique
@@ -84,8 +94,10 @@ module.exports = {
   SPINS_AWARD_BAG_R,
   SPINS_AWARD_BAG_R_BUY,
   SPINS_AWARD_BAG_S,
+  SPINS_AWARD_BAG_FEATURE_SPINS,
   SYMBOL_COUNT_BAG,
   INITIAL_DROP_CHANCE_ONE_IN,
+  INITIAL_DROP_CHANCE_ONE_IN_BUY,
   RESTACK_DROP_CHANCE_ONE_IN,
   SYMBOL_CAP,
   BLOCKS_AT_SYMBOL_CAP,

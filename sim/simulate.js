@@ -22,7 +22,7 @@ const { formatReport }         = require('./reportFormat');
 
 const ROUND_STEP_GUARD    = 5000;
 const PLACEHOLDER_BET     = 100;
-const DEFAULT_N_BY_MODE   = { base: 100_000, baseplus: 100_000, bonus: 50_000, super: 50_000 };
+const DEFAULT_N_BY_MODE   = { base: 100_000, baseplus: 100_000, feature_spins: 100_000, bonus: 50_000, super: 50_000 };
 // Large prime used to spread seeds across workers while keeping runs reproducible.
 const WORKER_SEED_STRIDE  = 1_000_003;
 

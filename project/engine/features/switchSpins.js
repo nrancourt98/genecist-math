@@ -4,8 +4,10 @@ const {
   SPINS_AWARD_BAG_R,
   SPINS_AWARD_BAG_R_BUY,
   SPINS_AWARD_BAG_S,
+  SPINS_AWARD_BAG_FEATURE_SPINS,
   SYMBOL_COUNT_BAG,
   INITIAL_DROP_CHANCE_ONE_IN,
+  INITIAL_DROP_CHANCE_ONE_IN_BUY,
   RESTACK_DROP_CHANCE_ONE_IN,
   SYMBOL_CAP,
   BLOCKS_AT_SYMBOL_CAP,
@@ -59,15 +61,19 @@ function createInitialSwitchState() {
  * @param {import("../rng/rngInterface")} rng
  * @param {boolean} [forceDrop=false] - when true, skips the probability roll and always
  *   places a drop (used by the feature_spins buy mode's guaranteed first-spin drop)
+ * @param {boolean} [isBuyRound=false] - when true, uses INITIAL_DROP_CHANCE_ONE_IN_BUY
+ *   (richer R-mode rate) for bonus/super buy sessions, keeping their switch frequency
+ *   independent of the natural-FS rate tuned for base mode
  * @returns {{reel: number, row: number}|null}
  */
-function maybeDropSwitch(switchState, gameMode, rng, forceDrop = false) {
+function maybeDropSwitch(switchState, gameMode, rng, forceDrop = false, isBuyRound = false) {
   if (BLOCKS_AT_SYMBOL_CAP[gameMode] && switchState.symbols.length >= SYMBOL_CAP) {
     return null;
   }
 
   if (!forceDrop) {
-    const chanceTable = switchState.spins > 0 ? RESTACK_DROP_CHANCE_ONE_IN : INITIAL_DROP_CHANCE_ONE_IN;
+    const initialTable = isBuyRound ? INITIAL_DROP_CHANCE_ONE_IN_BUY : INITIAL_DROP_CHANCE_ONE_IN;
+    const chanceTable = switchState.spins > 0 ? RESTACK_DROP_CHANCE_ONE_IN : initialTable;
     const dropped = rng.randInt(chanceTable[gameMode]) === 0;
     if (!dropped) return null;
   }
@@ -90,9 +96,10 @@ function maybeDropSwitch(switchState, gameMode, rng, forceDrop = false) {
  * @param {"base"|"R"|"S"} gameMode
  * @param {import("../rng/rngInterface")} rng
  * @param {boolean} [isBuy=false] - true for bonus/super buy sessions; uses buy-specific spin bag
+ * @param {string|null} [betMode=null] - round bet mode; "feature_spins" selects its own bag
  * @returns {{spinsAwarded: number, wild: boolean, symbols: string[], totalSpins: number}}
  */
-function resolveSwitchAward(switchState, gameMode, rng, isBuy = false) {
+function resolveSwitchAward(switchState, gameMode, rng, isBuy = false, betMode = null) {
   // In S-mode the wild/H5 substitution target is locked on the first drop and stays
   // fixed for the entire session as the pool accumulates. Re-rolling it mid-session
   // would silently flip all accumulated symbols to a different target, which would be
@@ -111,6 +118,7 @@ function resolveSwitchAward(switchState, gameMode, rng, isBuy = false) {
   const spinsBag =
     gameMode === "S" ? SPINS_AWARD_BAG_S :
     gameMode === "R" ? (isBuy ? SPINS_AWARD_BAG_R_BUY : SPINS_AWARD_BAG_R) :
+    betMode === "feature_spins" ? SPINS_AWARD_BAG_FEATURE_SPINS :
     SPINS_AWARD_BAG_BASE_AND_R;
   const spinsAwarded = rng.pickFromBag(spinsBag);
 

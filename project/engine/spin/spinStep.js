@@ -119,7 +119,7 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
   evaluateAndRecordWin(state, board, "basegameWinsCenti", out);
 
   if (dropPosition) {
-    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super");
+    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super", state.betMode);
     out.push(events.newSwitchEvent(award.spinsAwarded, award.wild, award.symbols));
     out.push(events.newSwitchSpinsEvent(award.totalSpins));
   }
@@ -207,7 +207,8 @@ function resolveFreeSpinStep(state, rng, out, reelProvider) {
   const board = drawBoard(reelStrip, rng);
   assignWildMultipliers(board, gameMode, rng);
 
-  const dropPosition = maybeDropSwitch(state.switch, gameMode, rng);
+  const isBuyRound = state.betMode === "bonus" || state.betMode === "super";
+  const dropPosition = maybeDropSwitch(state.switch, gameMode, rng, false, isBuyRound);
   if (dropPosition) {
     board[dropPosition.reel][dropPosition.row] = { name: "SW", switch: true };
   }
@@ -229,7 +230,7 @@ function resolveFreeSpinStep(state, rng, out, reelProvider) {
   evaluateAndRecordWin(state, board, "freegameWinsCenti", out);
 
   if (dropPosition) {
-    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super");
+    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super", state.betMode);
     out.push(events.newSwitchEvent(award.spinsAwarded, award.wild, award.symbols));
     out.push(events.newSwitchSpinsEvent(award.totalSpins));
   }
