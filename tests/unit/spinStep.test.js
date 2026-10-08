@@ -212,6 +212,30 @@ test("4+ natural S scatters on the board upgrades straight to Super Free Spins (
   assert.deepEqual(result.roundState.freeSpin, { mode: "S", fs: 0, totFs: 10, reelSet: "FR1" });
 });
 
+test("a natural trigger at the end of a base switch sequence starts the feature with a clean switch state", () => {
+  const reelProvider = buildReelProvider({
+    BR0: singleRowStrip(["S", "NEUTRAL", "S", "NEUTRAL", "S", "NEUTRAL"]),
+  });
+  const rng = createMockRng({
+    randInts: [
+      0, 0, 0, 0, 0, 0, // drawBoard
+      1, // maybeDropSwitch: no drop
+      0, 0, 0, 0, 0, 0, // randomPaddingPositions
+    ],
+  });
+  // Last spin of a wild base sequence: decrements 1 -> 0, so the trigger check runs.
+  const state = {
+    ...createInitialRoundState("base", 100),
+    switch: { spins: 1, symbols: ["H4", "L1"], wild: true },
+  };
+
+  const result = resolveOneSpin(state, rng, reelProvider);
+
+  assert.equal(result.roundState.phase, "freespins");
+  assert.equal(result.roundState.freeSpin.mode, "S");
+  assert.deepEqual(result.roundState.switch, createInitialSwitchState());
+});
+
 test("switch sequence: decrement-before-draw ordering and board-wide replacement wiring across two spins", () => {
   const noScatterReel = singleRowStrip(["NEUTRAL", "NEUTRAL", "NEUTRAL", "NEUTRAL", "NEUTRAL", "NEUTRAL"]);
   const l1OnReel0 = singleRowStrip(["L1", "NEUTRAL", "NEUTRAL", "NEUTRAL", "NEUTRAL", "NEUTRAL"]);

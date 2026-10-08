@@ -139,6 +139,12 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
         out.push(events.freeSpinTriggerEvent(10, trigger.positions));
         state.phase = "freespins";
         state.freeSpin = createInitialFreeSpinState(trigger.mode);
+        // Every feature starts with a clean switch state, same as the R->S upgrade path
+        // and gamestate.py (run_freespin/run_super_freespin init their switch vars
+        // locally). Without this, base's leftover symbols/wild target carried into the
+        // feature, and S-mode's permanently-active pool applied them from its first
+        // spin - including a wild target S-mode can never roll itself.
+        state.switch = createInitialSwitchState();
       }
     }
     if (state.phase === "base") {
