@@ -1,6 +1,13 @@
 // Ported verbatim from gamestate.py's literal random.choice([...]) lists. Kept as literal
 // arrays (not pre-collapsed to probabilities) so they stay diffable against the Python
 // source by eye. See docs/game-design-spec.md "Switch Spins feature".
+// Bags tuned for RTP (no longer Python-verbatim) are written as {value: count} via
+// bagFromCounts instead, since fine RTP steps need long bags (up to 160 entries).
+
+/** Expands {value: count} into a pickFromBag array, in ascending value order. */
+function bagFromCounts(counts) {
+  return Object.entries(counts).flatMap(([value, count]) => Array(count).fill(Number(value)));
+}
 
 // Base game spin bag — longer sequences feel exciting in base since triggers are rarer.
 const SPINS_AWARD_BAG_BASE_AND_R = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]; // mean 2.0; 1=40%, 2=30%, 3=20%, 4=10%
@@ -12,37 +19,32 @@ const SPINS_AWARD_BAG_R = [1, 1, 1, 1, 1, 1, 1, 1, 2, 3]; // mean 1.4; 1=80%, 2=
 // R-mode bag for bonus BUY sessions only. Richer than the natural-FS R bag (mean 1.4)
 // to deliver ~96% RTP at 100x cost. Max capped at 8 (vs S-mode's 10) since R-mode
 // sequences convert fewer symbols per spin.
-// 20 entries so it can take half-steps: one of the two 8s is a 7 (8->7 on a 10-entry bag
-// overshot to 95.8%). Bonus 96.16% over 12M rounds (2026-10).
-const SPINS_AWARD_BAG_R_BUY = [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 8]; // mean 3.55; max 8
+// 80 entries so each +1 to the total is ~0.13pp of bonus RTP (measured by paired simulation).
+// vs [1,1,2,2,3,4,4,5,6,8] x8: four 8s -> 7 and two 2s -> 1 -> bonus 96.10% (2026-10).
+const SPINS_AWARD_BAG_R_BUY = bagFromCounts({ 1: 18, 2: 14, 3: 8, 4: 16, 5: 8, 6: 8, 7: 4, 8: 4 }); // mean 3.53
 
 // S-mode (super free spins) uses a slightly different, lower-skewed bag.
 // gamestate.py run_super_freespin:313, upgrade_super_freespin:408.
 // Extended with 3 extra 1s to lower the mean (2.91 vs original 3.10) while keeping max=10.
 // 1-spin: 41%, 2-spin: 19%, 3-spin: 16%, 4-spin: 6%, 5–10: rare; 10-spin jackpot preserved.
 // Used by buy sessions (super, and bonus after an R->S upgrade) - calibrated for super at 300x.
-const SPINS_AWARD_BAG_S_BUY = [
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10,
-];
+// 128 entries (the 32-entry original x4) so each +1 to the total is ~0.12pp of super RTP
+// (measured by paired simulation); one 1 -> 2 on top of the original -> super 96.07% (2026-10).
+const SPINS_AWARD_BAG_S_BUY = bagFromCounts({ 1: 51, 2: 25, 3: 20, 4: 8, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 4 }); // mean 2.91
 
 // S-mode bag for naturally-triggered/upgraded Super FS (base, baseplus, feature_spins). Split
 // from the buy bag (same pattern as R / R_BUY) so base RTP can be tuned without moving super.
-// S-mode sessions carry most of base's free-spin value (incl. R->S upgrades), and this bag's
-// 32 entries give fine steps (~0.25pp base RTP per +1 to the bag total).
-// vs the buy bag: three 1s -> 2 and one 1 -> 3 (mean 3.06 vs 2.91) -> base 95.90% (2026-10).
-const SPINS_AWARD_BAG_S = [
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10,
-];
+// S-mode sessions carry most of base's free-spin value (incl. R->S upgrades). 128 entries
+// so each +1 to the total is ~0.06pp of base RTP (measured by paired simulation).
+// vs the original S bag x4: six 1s -> 2 and eight 1s -> 3 (+22) -> base 96.12% (2026-10).
+const SPINS_AWARD_BAG_S = bagFromCounts({ 1: 38, 2: 30, 3: 28, 4: 8, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 4 }); // mean 3.08
 
 // feature_spins buy mode: guaranteed first-spin drop on base reels at 20× cost.
 // Needs a much richer bag than the standard base bag (mean 2.0) to reach 96% RTP.
-// Steep lever: each +0.1 on the mean is ~+1.2pp RTP, so 40 entries for quarter-steps:
-// three copies of [5,6,6,7,8,8,9,10,10,13] (mean 8.2 -> 96.33%) plus one with a 10 -> 9
-// (mean 8.1). Mean 8.175 -> 96.04% (2026-10).
-const SPINS_AWARD_BAG_FEATURE_SPINS = [
-  5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8,
-  9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 13, 13, 13, 13,
-];
+// Steep lever: each +0.1 on the mean is ~+1.2pp RTP, so 160 entries, where each +1 to the
+// total is ~0.065pp (measured by paired simulation). Built from [5,6,6,7,8,8,9,10,10,13]
+// x16 (mean 8.2) with three 10s -> 9 -> 96.09% (2026-10).
+const SPINS_AWARD_BAG_FEATURE_SPINS = bagFromCounts({ 5: 16, 6: 32, 7: 16, 8: 32, 9: 19, 10: 29, 13: 16 }); // mean 8.18
 
 // Count of NEW switch-target symbols to add per drop, shared across all modes.
 // gamestate.py run_spin:119, run_freespin:215, run_super_freespin:315, upgrade_super_freespin:410.
