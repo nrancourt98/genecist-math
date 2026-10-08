@@ -18,6 +18,7 @@ const {
   resolveFullRound,
   createInitialRoundState,
   isFreshRound,
+  resolveRtpProfile,
   BET_MODE_COST_MULTIPLIER,
   VALID_BET_MODES,
   centiMultiplierToCents,
@@ -53,7 +54,7 @@ function resolveBetMode(req) {
 }
 
 async function handlePlay(params) {
-  const { round, game, req, god_data } = params;
+  const { round, game, req, config, god_data } = params;
 
   // Step 2: frontend signals it has finished animating — close the round
   if (round?.awaiting_confirm) {
@@ -69,10 +70,14 @@ async function handlePlay(params) {
 
   // Step 1: resolve the full round and deliver all events
   const fresh = isFreshRound(round);
-  console.log(`[play] req.bet=${req.bet} purchased_feature=${req.purchased_feature ?? "-"} fresh=${fresh}`);
+  console.log(`[play] req.bet=${req.bet} purchased_feature=${req.purchased_feature ?? "-"} rtp=${config?.rtp ?? "-"} fresh=${fresh}`);
 
   const betAmountCents = Math.trunc(Number(req.bet));
-  const roundState = fresh ? createInitialRoundState(resolveBetMode(req), betAmountCents) : round;
+  // config.rtp picks the RTP profile (see engine/config/rtpProfiles.js); it's stored in the
+  // round state, so a resumed round keeps the profile it started with.
+  const roundState = fresh
+    ? createInitialRoundState(resolveBetMode(req), betAmountCents, resolveRtpProfile(config?.rtp))
+    : round;
 
   const isBonusMode = roundState.betMode === "bonus" || roundState.betMode === "super";
   const rng = maybeCreateGodRng(god_data) || (await createRemoteRng(isBonusMode ? 800 : 600));

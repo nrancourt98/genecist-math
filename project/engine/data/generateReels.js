@@ -9,7 +9,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createLocalPrng } = require("../rng/localPrng");
 const { convertOne } = require("./convertReels");
-const { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS, FR0_BUY_WEIGHTS, FR1_BUY_WEIGHTS } = require("./reelWeights");
+const { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS, FR0_BUY_WEIGHTS, FR1_BUY_WEIGHTS, DERIVED_REELS } = require("./reelWeights");
 
 const REELS_DIR = path.join(__dirname, "reels");
 const NUM_REELS = 6;
@@ -103,22 +103,67 @@ function writeStripCsv(name, rows) {
   fs.writeFileSync(csvPath, rows.map((row) => row.join(",")).join("\n"));
 }
 
+/** Length of the same-symbol vertical run through (row, reel), wrapping like drawBoard does. */
+function runLength(rows, row, reel) {
+  const len = rows.length;
+  const symbol = rows[row][reel];
+  let run = 1;
+  while (run < len && rows[(row + run) % len][reel] === symbol) run++;
+  for (let back = 1; run < len && rows[(row - back + len) % len][reel] === symbol; back++) run++;
+  return run;
+}
+
+/**
+ * Derives a strip from `rows` by swapping `count` cells through `map` (see reelWeights.js
+ * DERIVED_REELS). Eligible cells are those whose symbol is a key of `map` and whose run is at
+ * most `maxRun`, both judged on the source strip; they're shuffled once with `seed` and the
+ * first `count` are swapped, so count N+1 is always count N plus one more swap.
+ * @returns {string[][]} a new strip; `rows` is not modified
+ */
+function deriveStrip(rows, { seed, map, count, maxRun = Infinity }) {
+  const eligible = [];
+  for (let reel = 0; reel < rows[0].length; reel++) {
+    for (let row = 0; row < rows.length; row++) {
+      if (map[rows[row][reel]] && runLength(rows, row, reel) <= maxRun) eligible.push([row, reel]);
+    }
+  }
+  if (count > eligible.length) throw new Error(`deriveStrip: count ${count} > ${eligible.length} eligible cells`);
+
+  const rng = createLocalPrng(seed);
+  for (let i = eligible.length - 1; i > 0; i--) {
+    const j = rng.randInt(i + 1);
+    [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+  }
+
+  const out = rows.map((r) => r.slice());
+  for (const [row, reel] of eligible.slice(0, count)) out[row][reel] = map[out[row][reel]];
+  return out;
+}
+
 function generateAndConvert(name, weights, rng) {
   const isCluster = Array.isArray(weights) && weights[0]?.clusterProbability !== undefined;
   const rows = isCluster ? generateClusteredStrip(weights, rng) : generateStrip(weights, rng);
   writeStripCsv(name, rows);
   convertOne(name);
+  return rows;
 }
 
 if (require.main === module) {
   // Each strip gets its own independent RNG so FR0/FR1 are stable regardless of how
   // many RNG calls BR0 cluster generation consumes (which varies with cluster decisions).
-  generateAndConvert("BR0", BR0_WEIGHTS, createLocalPrng(20260619));
-  generateAndConvert("FR0", FR0_WEIGHTS, createLocalPrng(20261001));
-  generateAndConvert("FR1", FR1_WEIGHTS, createLocalPrng(20261002));
+  const strips = {};
+  strips.BR0 = generateAndConvert("BR0", BR0_WEIGHTS, createLocalPrng(20260619));
+  strips.FR0 = generateAndConvert("FR0", FR0_WEIGHTS, createLocalPrng(20261001));
+  strips.FR1 = generateAndConvert("FR1", FR1_WEIGHTS, createLocalPrng(20261002));
   // FR0_BUY/FR1_BUY use dedicated seeds so buy strips can be regenerated independently.
-  generateAndConvert("FR0_BUY", FR0_BUY_WEIGHTS, createLocalPrng(20261003));
-  generateAndConvert("FR1_BUY", FR1_BUY_WEIGHTS, createLocalPrng(20261004));
+  strips.FR0_BUY = generateAndConvert("FR0_BUY", FR0_BUY_WEIGHTS, createLocalPrng(20261003));
+  strips.FR1_BUY = generateAndConvert("FR1_BUY", FR1_BUY_WEIGHTS, createLocalPrng(20261004));
+
+  // 94% profile strips, derived from the 96% strips above.
+  for (const [name, spec] of Object.entries(DERIVED_REELS)) {
+    writeStripCsv(name, deriveStrip(strips[spec.source], spec));
+    convertOne(name);
+  }
 }
 
-module.exports = { generateStrip, generateClusteredStrip, generateAndConvert };
+module.exports = { generateStrip, generateClusteredStrip, generateAndConvert, deriveStrip };

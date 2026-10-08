@@ -18,10 +18,11 @@ const BASEPLUS_BOOST_CHANCE = { hits: 604, outOf: 10000 };
  * outcome.
  * @param {{name: string}[][]} board
  * @param {import("../rng/rngInterface")} rng
+ * @param {{hits: number, outOf: number}} [chance] - the RTP profile's boost chance (defaults to the 96% profile's)
  * @returns {{reel: number, row: number, symbol: string}|null}
  */
-function maybeApplyBasePlusBoost(board, rng) {
-  if (rng.randInt(BASEPLUS_BOOST_CHANCE.outOf) >= BASEPLUS_BOOST_CHANCE.hits) return null;
+function maybeApplyBasePlusBoost(board, rng, chance = BASEPLUS_BOOST_CHANCE) {
+  if (rng.randInt(chance.outOf) >= chance.hits) return null;
 
   const reel = rng.randInt(board.length);
   const row = rng.randInt(board[0].length);

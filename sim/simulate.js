@@ -4,8 +4,10 @@
 // the project's primary math-documentation artifact for BGaming's submission requirements.
 //
 // Usage:
-//   node sim/simulate.js --mode base --n 1000000 [--seed 42] [--workers 4]
-//   node sim/simulate.js --all [--n 500000] [--workers 8]
+//   node sim/simulate.js --mode base --n 1000000 [--seed 42] [--workers 4] [--rtp 94]
+//   node sim/simulate.js --all [--n 500000] [--workers 8] [--rtp 94]
+//
+// --rtp selects the RTP profile (engine/config/rtpProfiles.js); defaults to the 96% profile.
 //
 // --workers uses Node.js worker_threads to parallelize across CPU cores; each worker
 // gets its own seeded PRNG (seed + workerIndex * largePrime) for uncorrelated results.
@@ -15,8 +17,9 @@
 
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 
-const { resolveOneSpin, createInitialRoundState, createLocalPrng, BET_MODE_COST_MULTIPLIER, VALID_BET_MODES } =
+const { resolveOneSpin, createInitialRoundState, createLocalPrng, BET_MODE_COST_MULTIPLIER, VALID_BET_MODES, RTP_PROFILES } =
   require('../project/engine');
+const { DEFAULT_RTP_PROFILE } = require('../project/engine/config/rtpProfiles');
 const { createStatsCollector } = require('./statsCollector');
 const { formatReport }         = require('./reportFormat');
 
@@ -28,8 +31,8 @@ const WORKER_SEED_STRIDE  = 1_000_003;
 
 // ─── Per-round simulation ─────────────────────────────────────────────────────
 
-function simulateOneRound(betMode, rng) {
-  let roundState     = createInitialRoundState(betMode, PLACEHOLDER_BET);
+function simulateOneRound(betMode, rng, rtpProfile) {
+  let roundState     = createInitialRoundState(betMode, PLACEHOLDER_BET, rtpProfile);
   let prevSwitchSpins = roundState.switch.spins;
 
   let switchSequenceCount = 0;
@@ -101,17 +104,17 @@ function simulateOneRound(betMode, rng) {
 
 // ─── Single-threaded run ──────────────────────────────────────────────────────
 
-function runSimulation(betMode, n, seed) {
+function runSimulation(betMode, n, seed, rtpProfile) {
   const rng       = createLocalPrng(seed);
   const costCenti = BET_MODE_COST_MULTIPLIER[betMode] * 100;
   const collector = createStatsCollector(costCenti);
-  for (let i = 0; i < n; i++) collector.recordRound(simulateOneRound(betMode, rng));
+  for (let i = 0; i < n; i++) collector.recordRound(simulateOneRound(betMode, rng, rtpProfile));
   return collector.summary();
 }
 
 // ─── Parallel run (worker_threads) ───────────────────────────────────────────
 
-function runSimulationParallel(betMode, n, numWorkers, seed) {
+function runSimulationParallel(betMode, n, numWorkers, seed, rtpProfile) {
   return new Promise((resolve, reject) => {
     const costCenti  = BET_MODE_COST_MULTIPLIER[betMode] * 100;
     const collector  = createStatsCollector(costCenti);
@@ -127,7 +130,7 @@ function runSimulationParallel(betMode, n, numWorkers, seed) {
       // Each worker gets a distinct seed so their PRNG streams don't correlate.
       const workerSeed = seed !== undefined ? seed + i * WORKER_SEED_STRIDE : undefined;
 
-      const worker = new Worker(__filename, { workerData: { betMode, n: workerN, seed: workerSeed } });
+      const worker = new Worker(__filename, { workerData: { betMode, n: workerN, seed: workerSeed, rtpProfile } });
       worker.on('message', (rawTotals) => {
         collector.mergeRawTotals(rawTotals);
         if (++completed === actualWorkers) resolve(collector.summary());
@@ -141,38 +144,44 @@ function runSimulationParallel(betMode, n, numWorkers, seed) {
 
 // ─── Reporting ────────────────────────────────────────────────────────────────
 
-async function simulateAndPrint(mode, n, seed, numWorkers) {
+async function simulateAndPrint(mode, n, seed, numWorkers, rtpProfile) {
   const parallel = numWorkers > 1;
   const label    = parallel ? ` · ${numWorkers} workers` : '';
-  console.log(`Simulating ${n.toLocaleString()} rounds of "${mode}"${label}...`);
+  console.log(`Simulating ${n.toLocaleString()} rounds of "${mode}" (RTP profile ${rtpProfile})${label}...`);
   const start = Date.now();
   const summary = parallel
-    ? await runSimulationParallel(mode, n, numWorkers, seed)
-    : runSimulation(mode, n, seed);
-  console.log(formatReport(mode, n, summary, Date.now() - start, numWorkers));
+    ? await runSimulationParallel(mode, n, numWorkers, seed, rtpProfile)
+    : runSimulation(mode, n, seed, rtpProfile);
+  console.log(formatReport(mode, n, summary, Date.now() - start, numWorkers, rtpProfile));
 }
 
 // ─── CLI entry point ──────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const args = { mode: null, n: null, seed: undefined, all: false, workers: 1 };
+  const args = { mode: null, n: null, seed: undefined, all: false, workers: 1, rtp: DEFAULT_RTP_PROFILE };
   for (let i = 0; i < argv.length; i++) {
     if      (argv[i] === '--mode')    args.mode    = argv[++i];
     else if (argv[i] === '--n')       args.n       = parseInt(argv[++i], 10);
     else if (argv[i] === '--seed')    args.seed    = parseInt(argv[++i], 10);
     else if (argv[i] === '--workers') args.workers = parseInt(argv[++i], 10);
     else if (argv[i] === '--all')     args.all     = true;
+    else if (argv[i] === '--rtp')     args.rtp     = argv[++i];
   }
   return args;
 }
 
 async function main() {
-  const { mode, n, seed, all, workers } = parseArgs(process.argv.slice(2));
+  const { mode, n, seed, all, workers, rtp } = parseArgs(process.argv.slice(2));
   const numWorkers = Math.max(1, workers);
+  if (!RTP_PROFILES[rtp]) {
+    console.error(`Unknown --rtp "${rtp}". Valid: ${Object.keys(RTP_PROFILES).join(', ')}`);
+    process.exitCode = 1;
+    return;
+  }
 
   if (all) {
     for (const betMode of VALID_BET_MODES) {
-      await simulateAndPrint(betMode, n || DEFAULT_N_BY_MODE[betMode], seed, numWorkers);
+      await simulateAndPrint(betMode, n || DEFAULT_N_BY_MODE[betMode], seed, numWorkers, rtp);
     }
     return;
   }
@@ -183,18 +192,18 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  await simulateAndPrint(resolvedMode, n || DEFAULT_N_BY_MODE[resolvedMode], seed, numWorkers);
+  await simulateAndPrint(resolvedMode, n || DEFAULT_N_BY_MODE[resolvedMode], seed, numWorkers, rtp);
 }
 
 // ─── Worker entry / main dispatch ─────────────────────────────────────────────
 
 if (!isMainThread) {
   // Running as a spawned worker: simulate and post raw totals back to the main thread.
-  const { betMode, n, seed } = workerData;
+  const { betMode, n, seed, rtpProfile } = workerData;
   const costCenti = BET_MODE_COST_MULTIPLIER[betMode] * 100;
   const rng       = createLocalPrng(seed);
   const collector = createStatsCollector(costCenti);
-  for (let i = 0; i < n; i++) collector.recordRound(simulateOneRound(betMode, rng));
+  for (let i = 0; i < n; i++) collector.recordRound(simulateOneRound(betMode, rng, rtpProfile));
   parentPort.postMessage(collector.getRawTotals());
 } else {
   main().catch((err) => { console.error(err.stack || err.message); process.exitCode = 1; });

@@ -41,15 +41,16 @@ function bar(fraction, width) {
  * @param {object} s          - summary() output from createStatsCollector
  * @param {number} elapsedMs  - wall-clock time
  * @param {number} numWorkers - parallel workers used
+ * @param {string} [rtpProfile] - RTP profile simulated (engine/config/rtpProfiles.js)
  */
-function formatReport(mode, n, s, elapsedMs, numWorkers) {
+function formatReport(mode, n, s, elapsedMs, numWorkers, rtpProfile = '96') {
   const lines = [];
   const roundsPerSec = n / (elapsedMs / 1000);
   const workersLabel = numWorkers > 1 ? ` (${numWorkers} workers)` : '';
 
   lines.push('');
   lines.push(DIVIDER);
-  lines.push(pad(`  GENECIST — Simulation Report  [mode: ${mode.toUpperCase()}]`, COL_WIDTH));
+  lines.push(pad(`  GENECIST — Simulation Report  [mode: ${mode.toUpperCase()} · RTP profile ${rtpProfile}]`, COL_WIDTH));
   lines.push(DIVIDER);
   lines.push(row('  Rounds simulated', commas(n)));
   lines.push(row('  Elapsed time',     `${(elapsedMs / 1000).toFixed(1)}s${workersLabel}`));

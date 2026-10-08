@@ -1,4 +1,5 @@
 const { getReel } = require("../config/reels");
+const { getRtpProfile, profileReelName } = require("../config/rtpProfiles");
 const { drawBoard } = require("../board/drawBoard");
 const { evaluateLines } = require("../wins/lineEvaluator");
 const { buildWinEntries, assignWildMultipliers } = require("../wins/wildMultiplier");
@@ -86,12 +87,13 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
     out.push(events.updateSwitchSpinsEvent(state.switch.spins));
   }
 
-  const reelStrip = reelProvider(BASE_REEL_BY_MODE[state.betMode]);
+  const profile = getRtpProfile(state.rtpProfile);
+  const reelStrip = reelProvider(profileReelName(profile, BASE_REEL_BY_MODE[state.betMode]));
   const board = drawBoard(reelStrip, rng);
 
   // Once per round only - see engine/features/basePlus.js.
   if (state.betMode === "baseplus" && !state.basePlusBoostApplied) {
-    maybeApplyBasePlusBoost(board, rng);
+    maybeApplyBasePlusBoost(board, rng, profile.basePlusBoostChance);
     state.basePlusBoostApplied = true;
   }
 
@@ -102,7 +104,7 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
   const forceDrop = state.guaranteedSwitchDrop === true;
   if (forceDrop) state.guaranteedSwitchDrop = false;
 
-  const dropPosition = maybeDropSwitch(state.switch, gameMode, rng, forceDrop);
+  const dropPosition = maybeDropSwitch(state.switch, gameMode, rng, forceDrop, false, profile.switchTables);
   if (dropPosition) {
     board[dropPosition.reel][dropPosition.row] = { name: "SW", switch: true };
   }
@@ -119,7 +121,7 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
   evaluateAndRecordWin(state, board, "basegameWinsCenti", out);
 
   if (dropPosition) {
-    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super", state.betMode);
+    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super", state.betMode, profile.switchTables);
     out.push(events.newSwitchEvent(award.spinsAwarded, award.wild, award.symbols));
     out.push(events.newSwitchSpinsEvent(award.totalSpins));
   }
@@ -165,7 +167,8 @@ function resolveBaseSpinStep(state, rng, out, reelProvider) {
 // invariant (see docs/architecture.md's judgment-call log, "buy-feature triggering
 // board").
 function resolveBuyTriggerStep(state, rng, out, reelProvider) {
-  const reelStrip = reelProvider(BASE_REEL_BY_MODE[state.betMode]);
+  const profile = getRtpProfile(state.rtpProfile);
+  const reelStrip = reelProvider(profileReelName(profile, BASE_REEL_BY_MODE[state.betMode]));
   const board = buildSyntheticTriggerBoard(state.freeSpin.mode, reelStrip, rng);
   assignWildMultipliers(board, "base", rng);
 
@@ -209,12 +212,13 @@ function resolveFreeSpinStep(state, rng, out, reelProvider) {
     out.push(events.updateFreeSpinEvent(freeSpin.fs, freeSpin.totFs));
   }
 
-  const reelStrip = reelProvider(freeSpin.reelSet);
+  const profile = getRtpProfile(state.rtpProfile);
+  const reelStrip = reelProvider(profileReelName(profile, freeSpin.reelSet));
   const board = drawBoard(reelStrip, rng);
   assignWildMultipliers(board, gameMode, rng);
 
   const isBuyRound = state.betMode === "bonus" || state.betMode === "super";
-  const dropPosition = maybeDropSwitch(state.switch, gameMode, rng, false, isBuyRound);
+  const dropPosition = maybeDropSwitch(state.switch, gameMode, rng, false, isBuyRound, profile.switchTables);
   if (dropPosition) {
     board[dropPosition.reel][dropPosition.row] = { name: "SW", switch: true };
   }
@@ -236,7 +240,7 @@ function resolveFreeSpinStep(state, rng, out, reelProvider) {
   evaluateAndRecordWin(state, board, "freegameWinsCenti", out);
 
   if (dropPosition) {
-    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super", state.betMode);
+    const award = resolveSwitchAward(state.switch, gameMode, rng, state.betMode === "bonus" || state.betMode === "super", state.betMode, profile.switchTables);
     out.push(events.newSwitchEvent(award.spinsAwarded, award.wild, award.symbols));
     out.push(events.newSwitchSpinsEvent(award.totalSpins));
   }

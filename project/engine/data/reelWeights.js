@@ -132,4 +132,23 @@ const FR1_BUY_WEIGHTS = {
   S: 2,
 };
 
-module.exports = { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS, FR0_BUY_WEIGHTS, FR1_BUY_WEIGHTS };
+// --- 94% RTP PROFILE STRIPS ---
+//
+// Each 94% strip is its 96% source strip with `count` cells swapped through `map` (a high-pay
+// symbol to its low-pay counterpart). Swap positions follow a fixed seeded order over the
+// eligible cells, so raising `count` only adds swaps on top of the previous ones - tuning
+// stays monotone, and paired simulation can measure each step. S is never eligible, so the
+// scatter layout - and with it every feature trigger, retrigger and upgrade rate - is
+// identical to the 96% profile. `maxRun` (BR0 only) limits swaps to cells in same-symbol
+// runs no longer than that, so BR0's clusters (5-8 long) stay visually intact.
+const HIGH_TO_LOW = { H1: "L1", H2: "L2", H3: "L3", H4: "L4", H5: "L5" };
+
+const DERIVED_REELS = {
+  BR0_94:     { source: "BR0",     seed: 20261101, map: HIGH_TO_LOW, count: 0, maxRun: 2 },
+  FR0_94:     { source: "FR0",     seed: 20261102, map: HIGH_TO_LOW, count: 0 },
+  FR1_94:     { source: "FR1",     seed: 20261103, map: HIGH_TO_LOW, count: 0 },
+  FR0_BUY_94: { source: "FR0_BUY", seed: 20261104, map: HIGH_TO_LOW, count: 0 },
+  FR1_BUY_94: { source: "FR1_BUY", seed: 20261105, map: HIGH_TO_LOW, count: 0 },
+};
+
+module.exports = { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS, FR0_BUY_WEIGHTS, FR1_BUY_WEIGHTS, DERIVED_REELS };

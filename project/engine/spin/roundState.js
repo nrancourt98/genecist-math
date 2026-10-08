@@ -1,6 +1,7 @@
 const { createInitialSwitchState } = require("../features/switchSpins");
 const { createInitialFreeSpinState } = require("../features/freeSpins");
 const { BASEPLUS_COST_MULTIPLIER } = require("../features/basePlus");
+const { DEFAULT_RTP_PROFILE, getRtpProfile } = require("../config/rtpProfiles");
 
 // Buy-bonus cost multipliers, verified verbatim from game_config.py's bet_modes
 // (base=1.0, bonus=100.0, super=300.0); baseplus has no Python precedent, see
@@ -20,19 +21,22 @@ const VALID_BET_MODES = Object.keys(BET_MODE_COST_MULTIPLIER);
  * survives an opaque JSON round-trip through BGaming's Runner. See
  * docs/architecture.md "The step-function".
  *
- * @param {"base"|"baseplus"|"bonus"|"super"} betMode
+ * @param {"base"|"baseplus"|"feature_spins"|"bonus"|"super"} betMode
  * @param {number} betAmountCents
+ * @param {string} [rtpProfile] - see config/rtpProfiles.js; fixed for the whole round
  * @returns {object} a fresh roundState
  */
-function createInitialRoundState(betMode, betAmountCents) {
+function createInitialRoundState(betMode, betAmountCents, rtpProfile = DEFAULT_RTP_PROFILE) {
   if (!VALID_BET_MODES.includes(betMode)) {
     throw new Error(`Unknown bet mode: ${betMode}`);
   }
+  getRtpProfile(rtpProfile); // throws on an unknown profile
 
   const roundState = {
     version: 1,
     betMode,
     betAmountCents,
+    rtpProfile,
     phase: "base",
     basegameWinsCenti: 0,
     freegameWinsCenti: 0,

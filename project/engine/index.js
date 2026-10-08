@@ -9,6 +9,7 @@ const {
   BET_MODE_COST_MULTIPLIER,
   VALID_BET_MODES,
 } = require("./spin/roundState");
+const { resolveRtpProfile, RTP_PROFILES } = require("./config/rtpProfiles");
 const { centiMultiplierToCents } = require("./units");
 const { createRngFromUint32Source } = require("./rng/deriveRng");
 const { createLocalPrng } = require("./rng/localPrng");
@@ -20,6 +21,8 @@ module.exports = {
   isFreshRound,
   BET_MODE_COST_MULTIPLIER,
   VALID_BET_MODES,
+  resolveRtpProfile,
+  RTP_PROFILES,
   centiMultiplierToCents,
   createRngFromUint32Source,
   createLocalPrng,
