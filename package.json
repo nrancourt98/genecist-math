@@ -8,6 +8,9 @@
     "convert-reels": "node project/engine/data/convertReels.js",
     "gen-reels": "node project/engine/data/generateReels.js",
     "sim": "node sim/simulate.js",
+    "certify": "node sim/certify.js",
+    "estimate-base": "node sim/estimateBaseRtp.js",
+    "paired": "node sim/paired.js",
     "mock-runner": "node devtools/mockRunner.js"
   },
   "license": "UNLICENSED"

@@ -1,3 +1,4 @@
 node_modules/
 sim/output/
+sim/results/
 *.log
