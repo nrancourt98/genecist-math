@@ -141,14 +141,22 @@ const FR1_BUY_WEIGHTS = {
 // scatter layout - and with it every feature trigger, retrigger and upgrade rate - is
 // identical to the 96% profile. `maxRun` (BR0 only) limits swaps to cells in same-symbol
 // runs no longer than that, so BR0's clusters (5-8 long) stay visually intact.
+//
+// Counts were set by paired simulation (2026-10), aiming every mode at 94.00%:
+//   BR0_94      53 swaps  base-game wins -1.03pp of base (also feature_spins -2.6pp, offset by its 94% bag)
+//   FR1_94      52 swaps  natural Super FS session value -2.5%, R sessions -2.0% via upgrades
+//   FR0_BUY_94 210 swaps  bonus -1.4pp (plus ~-0.7pp from FR1_BUY_94 through R->S upgrades)
+//   FR1_BUY_94  61 swaps  super -2.14pp
+// There is no FR0_94: FR0 is ~85% low-pay symbols, so its high-pay cells mostly block low-pay
+// lines and H->L swaps *raise* R-session value. The 94% profile shares FR0 instead; R sessions
+// still lose value through their R->S upgrades onto FR1_94.
 const HIGH_TO_LOW = { H1: "L1", H2: "L2", H3: "L3", H4: "L4", H5: "L5" };
 
 const DERIVED_REELS = {
-  BR0_94:     { source: "BR0",     seed: 20261101, map: HIGH_TO_LOW, count: 0, maxRun: 2 },
-  FR0_94:     { source: "FR0",     seed: 20261102, map: HIGH_TO_LOW, count: 0 },
-  FR1_94:     { source: "FR1",     seed: 20261103, map: HIGH_TO_LOW, count: 0 },
-  FR0_BUY_94: { source: "FR0_BUY", seed: 20261104, map: HIGH_TO_LOW, count: 0 },
-  FR1_BUY_94: { source: "FR1_BUY", seed: 20261105, map: HIGH_TO_LOW, count: 0 },
+  BR0_94:     { source: "BR0",     seed: 20261101, map: HIGH_TO_LOW, count: 53, maxRun: 2 },
+  FR1_94:     { source: "FR1",     seed: 20261103, map: HIGH_TO_LOW, count: 52 },
+  FR0_BUY_94: { source: "FR0_BUY", seed: 20261104, map: HIGH_TO_LOW, count: 210 },
+  FR1_BUY_94: { source: "FR1_BUY", seed: 20261105, map: HIGH_TO_LOW, count: 61 },
 };
 
 module.exports = { BR0_WEIGHTS, FR0_WEIGHTS, FR1_WEIGHTS, FR0_BUY_WEIGHTS, FR1_BUY_WEIGHTS, DERIVED_REELS };

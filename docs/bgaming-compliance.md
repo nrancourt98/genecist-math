@@ -116,7 +116,7 @@ Reference plumbing (`./info/sample-game-main/backend/src/index.js`) uses plain E
 
 ## RTP guidance
 
-- Not required, but BGaming "strongly suggests" two RTP variants: ~96-97.5% and ~94-94.5% (`Questions.txt`). The Python prototype targets 96.00% (`game_config.py: self.rtp = 0.9600`) — treated as the primary/first-pass target; a second lower-RTP variant is explicitly deferred scope (see `docs/architecture.md`).
+- Not required, but BGaming "strongly suggests" two RTP variants: ~96-97.5% and ~94-94.5% (`Questions.txt`). The Python prototype targets 96.00% (`game_config.py: self.rtp = 0.9600`) — treated as the primary target (every mode 96.00-96.20%). A second 94% profile (every mode 93.90-94.10%) is selected per session by `config.rtp`: "94" (or "94.0", 94) picks it, anything else - including null - gets the 96% profile. See `engine/config/rtpProfiles.js` and `docs/architecture.md`.
 - Math/RTP must be independently verifiable — our offline simulation CLI (`sim/`) exists specifically to produce this documentation (RTP, hit rate, volatility, feature frequencies) ahead of any real submission.
 
 ## Out of scope for this project (Runner/frontend/asset responsibilities, not ours)

@@ -109,6 +109,7 @@ const SWITCH_SOURCE_WEIGHTS = {
 };
 
 module.exports = {
+  bagFromCounts,
   SPINS_AWARD_BAG_BASE_AND_R,
   SPINS_AWARD_BAG_R,
   SPINS_AWARD_BAG_R_BUY,

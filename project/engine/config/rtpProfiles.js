@@ -6,10 +6,12 @@
 // unsuffixed reel strips. Other profiles are overrides on top of it.
 //
 // The 94% reelsets are derived from the 96% strips by swapping a number of high-pay cells for
-// low-pay ones (see data/reelWeights.js DERIVED_REELS). Scatters never move, so every feature
-// trigger, retrigger and upgrade rate matches the 96% profile; only the payouts drop.
+// low-pay ones (see data/reelWeights.js DERIVED_REELS, which also explains why FR0 is shared).
+// Scatters never move, so every feature trigger, retrigger and upgrade rate matches the 96%
+// profile; only the payouts drop.
 
 const SWITCH_TABLES_96 = require("./switchTables");
+const { bagFromCounts } = SWITCH_TABLES_96;
 const { BASEPLUS_BOOST_CHANCE } = require("../features/basePlus");
 
 const DEFAULT_RTP_PROFILE = "96";
@@ -21,9 +23,16 @@ const RTP_PROFILES = {
     basePlusBoostChance: BASEPLUS_BOOST_CHANCE,
   },
   94: {
-    reels: { BR0: "BR0_94", FR0: "FR0_94", FR1: "FR1_94", FR0_BUY: "FR0_BUY_94", FR1_BUY: "FR1_BUY_94" },
-    switchTables: { ...SWITCH_TABLES_96 },
-    basePlusBoostChance: BASEPLUS_BOOST_CHANCE,
+    reels: { BR0: "BR0_94", FR1: "FR1_94", FR0_BUY: "FR0_BUY_94", FR1_BUY: "FR1_BUY_94" },
+    switchTables: {
+      ...SWITCH_TABLES_96,
+      // BR0_94's swaps remove switch targets, which costs feature_spins (~8 switch spins per
+      // round) ~2.6pp vs ~1pp for base; +18 on the 96% bag (some 8s -> 9, 9s -> 10) gives
+      // back the difference. ~0.075pp per +1.
+      SPINS_AWARD_BAG_FEATURE_SPINS: bagFromCounts({ 5: 16, 6: 32, 7: 16, 8: 23, 9: 19, 10: 38, 13: 16 }), // mean 8.29
+    },
+    // 6.04% -> 6.02%: with the 94% strips baseplus otherwise lands at 94.05%. FS rate stays 1 in 144.
+    basePlusBoostChance: { hits: 602, outOf: 10000 },
   },
 };
 

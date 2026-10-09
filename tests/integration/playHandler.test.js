@@ -223,6 +223,43 @@ test("a switch-spin drop on base mode's first spin emits newSwitch + newSwitchSp
   }
 });
 
+test("config.rtp selects the RTP profile: a 94% round draws from the 94% base strip", async () => {
+  const { REELS } = require("../../project/engine/config/reels");
+  const server = await startServer();
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  try {
+    // Pin one reel's window onto a cell that BR0_94 swapped, so the two profiles' first
+    // reveal boards must differ there (found at runtime, so re-tuning the swaps can't break it).
+    let swapped = null;
+    for (let row = 0; row < REELS.BR0.length && !swapped; row++) {
+      for (let reel = 0; reel < 6 && !swapped; reel++) {
+        if (REELS.BR0[row][reel] !== REELS.BR0_94[row][reel]) swapped = { row, reel };
+      }
+    }
+    assert.ok(swapped, "BR0_94 should differ from BR0");
+    const starts = [0, 0, 0, 0, 0, 0];
+    starts[swapped.reel] = swapped.row;
+    const godRandom = [...starts.map((row) => rawForStripRow(row, REELS.BR0.length)), SAFE_GOD_VALUE];
+
+    const firstBoard = async (rtp) => {
+      const result = await callPlay(baseUrl, {
+        round: {},
+        game: {},
+        req: { bet: 100, bet_type: "bet" },
+        config: { rtp, purchased_features: [], gamble_limit: null },
+        god_data: { random: godRandom },
+      });
+      return result.resp.events.find((e) => e.type === "reveal").board;
+    };
+
+    assert.equal((await firstBoard("96"))[swapped.reel][0].name, REELS.BR0[swapped.row][swapped.reel]);
+    assert.equal((await firstBoard("94"))[swapped.reel][0].name, REELS.BR0_94[swapped.row][swapped.reel]);
+    assert.equal((await firstBoard(null))[swapped.reel][0].name, REELS.BR0[swapped.row][swapped.reel]);
+  } finally {
+    server.close();
+  }
+});
+
 test("a natural 3+ scatter landing in base mode triggers classic Free Spins; freeSpinTrigger and selectedMode both appear in the step-1 event stream", async () => {
   const server = await startServer();
   const baseUrl = `http://127.0.0.1:${server.address().port}`;

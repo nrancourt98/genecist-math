@@ -5,7 +5,7 @@
 // Unsuffixed strips are the 96% profile's; *_94 are the 94% profile's (see config/rtpProfiles.js).
 const REEL_NAMES = [
   "BR0", "FR0", "FR1", "FR0_BUY", "FR1_BUY",
-  "BR0_94", "FR0_94", "FR1_94", "FR0_BUY_94", "FR1_BUY_94",
+  "BR0_94", "FR1_94", "FR0_BUY_94", "FR1_BUY_94",
 ];
 
 const REELS = Object.fromEntries(REEL_NAMES.map((name) => [name, require(`../data/reels/${name}.json`)]));
