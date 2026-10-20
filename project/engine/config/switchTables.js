@@ -19,9 +19,10 @@ const SPINS_AWARD_BAG_R = [1, 1, 1, 1, 1, 1, 1, 1, 2, 3]; // mean 1.4; 1=80%, 2=
 // R-mode bag for bonus BUY sessions only. Richer than the natural-FS R bag (mean 1.4)
 // to deliver ~96% RTP at 100x cost. Max capped at 8 (vs S-mode's 10) since R-mode
 // sequences convert fewer symbols per spin.
-// 80 entries so each +1 to the total is ~0.13pp of bonus RTP (measured by paired simulation).
-// vs [1,1,2,2,3,4,4,5,6,8] x8: four 8s -> 7 and two 2s -> 1 -> bonus 96.10% (2026-10).
-const SPINS_AWARD_BAG_R_BUY = bagFromCounts({ 1: 18, 2: 14, 3: 8, 4: 16, 5: 8, 6: 8, 7: 4, 8: 4 }); // mean 3.53
+// 160 entries so each +1 to the total is ~0.06pp of bonus RTP (measured by paired simulation).
+// vs [1,1,2,2,3,4,4,5,6,8] x16: eight 8s -> 7 and five 2s -> 1 -> bonus 96.12% (certification
+// re-centre, 2026-10; offsets the S_BUY step below, which also feeds bonus R->S upgrades).
+const SPINS_AWARD_BAG_R_BUY = bagFromCounts({ 1: 37, 2: 27, 3: 16, 4: 32, 5: 16, 6: 16, 7: 8, 8: 8 }); // mean 3.52
 
 // S-mode (super free spins) uses a slightly different, lower-skewed bag.
 // gamestate.py run_super_freespin:313, upgrade_super_freespin:408.
@@ -29,15 +30,17 @@ const SPINS_AWARD_BAG_R_BUY = bagFromCounts({ 1: 18, 2: 14, 3: 8, 4: 16, 5: 8, 6
 // 1-spin: 41%, 2-spin: 19%, 3-spin: 16%, 4-spin: 6%, 5–10: rare; 10-spin jackpot preserved.
 // Used by buy sessions (super, and bonus after an R->S upgrade) - calibrated for super at 300x.
 // 128 entries (the 32-entry original x4) so each +1 to the total is ~0.12pp of super RTP
-// (measured by paired simulation); one 1 -> 2 on top of the original -> super 96.07% (2026-10).
-const SPINS_AWARD_BAG_S_BUY = bagFromCounts({ 1: 51, 2: 25, 3: 20, 4: 8, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 4 }); // mean 2.91
+// (measured by paired simulation); two 1s -> 2 on top of the original -> super 96.08% / 93.97%
+// (94% profile) (certification re-centre, 2026-10).
+const SPINS_AWARD_BAG_S_BUY = bagFromCounts({ 1: 50, 2: 26, 3: 20, 4: 8, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 4 }); // mean 2.92
 
 // S-mode bag for naturally-triggered/upgraded Super FS (base, baseplus, feature_spins). Split
 // from the buy bag (same pattern as R / R_BUY) so base RTP can be tuned without moving super.
 // S-mode sessions carry most of base's free-spin value (incl. R->S upgrades). 128 entries
-// so each +1 to the total is ~0.06pp of base RTP (measured by paired simulation).
-// vs the original S bag x4: six 1s -> 2 and eight 1s -> 3 (+22) -> base 96.12% (2026-10).
-const SPINS_AWARD_BAG_S = bagFromCounts({ 1: 38, 2: 30, 3: 28, 4: 8, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 4 }); // mean 3.08
+// so each +1 to the total is ~0.055pp of base RTP (measured by paired simulation).
+// vs the original S bag x4: nine 1s -> 2 and eight 1s -> 3 (+25) -> base 96.11% (certification
+// re-centre, 2026-10). The 94% profile overrides it (config/rtpProfiles.js).
+const SPINS_AWARD_BAG_S = bagFromCounts({ 1: 35, 2: 33, 3: 28, 4: 8, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 4 }); // mean 3.10
 
 // feature_spins buy mode: guaranteed first-spin drop on base reels at 20× cost.
 // Needs a much richer bag than the standard base bag (mean 2.0) to reach 96% RTP.

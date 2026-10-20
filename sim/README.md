@@ -34,8 +34,11 @@ The direct runs still supply their hit rate, win distribution and max-win figure
    git clone <repo-url> BGAMING
    cd BGAMING
    ```
-3. Sanity check (tests take seconds, the smoke run a minute or two):
+3. Sanity check (tests take seconds, the smoke run a minute or two). The test suite includes an
+   integration test that starts the backend server, which needs its own dependency (Express);
+   the simulation tools themselves don't:
    ```
+   npm ci --prefix project/backend
    npm test
    npm run certify -- --smoke
    ```

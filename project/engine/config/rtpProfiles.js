@@ -30,9 +30,15 @@ const RTP_PROFILES = {
       // round) ~2.6pp vs ~1pp for base; +18 on the 96% bag (some 8s -> 9, 9s -> 10) gives
       // back the difference. ~0.075pp per +1.
       SPINS_AWARD_BAG_FEATURE_SPINS: bagFromCounts({ 5: 16, 6: 32, 7: 16, 8: 23, 9: 19, 10: 38, 13: 16 }), // mean 8.29
+      // Certification re-centre (2026-10): one step below the 96% natural S bag (sum 396 vs 397)
+      // puts base at 94.00%; the 96% bag would land 94.06%.
+      SPINS_AWARD_BAG_S: bagFromCounts({ 1: 36, 2: 32, 3: 28, 4: 8, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 4 }), // mean 3.09
+      // Keeps the pre-re-centre 80-entry bag (sum 282, same as 564/160): with the shared S_BUY step
+      // that puts bonus at 94.03%; the 96% half-step down would land 93.96%.
+      SPINS_AWARD_BAG_R_BUY: bagFromCounts({ 1: 18, 2: 14, 3: 8, 4: 16, 5: 8, 6: 8, 7: 4, 8: 4 }), // mean 3.53
     },
-    // 6.04% -> 6.02%: with the 94% strips baseplus otherwise lands at 94.05%. FS rate stays 1 in 144.
-    basePlusBoostChance: { hits: 602, outOf: 10000 },
+    // Same 6.02% as the 96% profile: puts baseplus at 94.00% with the 94% strips and bags above.
+    basePlusBoostChance: BASEPLUS_BOOST_CHANCE,
   },
 };
 
