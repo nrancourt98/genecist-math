@@ -17,3 +17,13 @@ visualizer/
 info/
 dump*.json
 *.log
+
+# Offline reel-strip tooling inside project/engine/, which project/backend/Dockerfile copies
+# whole: the generator scripts and the CSV sources they write. The engine only requires
+# data/reels/*.json at runtime (config/reels.js); tests and sim/ still use these from the repo.
+project/engine/data/convertReels.js
+project/engine/data/generateReels.js
+project/engine/data/reelWeights.js
+project/engine/data/reels/*.csv
+# Build recipe, not runtime content (Docker still reads it to build).
+project/backend/Dockerfile
